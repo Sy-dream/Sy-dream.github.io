@@ -1,0 +1,628 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>CTF Pwn 里的栈对齐 | 0x0off</title><meta name="author" content="0x0off"><meta name="copyright" content="0x0off"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="从 CTF Pwn 视角梳理 64 位 Linux 下的栈对齐原理、常见崩溃现象、排查方式与修复思路。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CTF Pwn 里的栈对齐">
+<meta property="og:url" content="https://0x0off.top/ctf-pwn-%E9%87%8C%E7%9A%84%E6%A0%88%E5%AF%B9%E9%BD%90/index.html">
+<meta property="og:site_name" content="0x0off">
+<meta property="og:description" content="从 CTF Pwn 视角梳理 64 位 Linux 下的栈对齐原理、常见崩溃现象、排查方式与修复思路。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://0x0off.top/img/20250427020155174569051569879.jpg">
+<meta property="article:published_time" content="2026-04-28T15:33:51.000Z">
+<meta property="article:modified_time" content="2026-04-28T15:33:51.000Z">
+<meta property="article:author" content="0x0off">
+<meta property="article:tag" content="ROP">
+<meta property="article:tag" content="ret2libc">
+<meta property="article:tag" content="栈对齐">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://0x0off.top/img/20250427020155174569051569879.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "CTF Pwn 里的栈对齐",
+  "url": "https://0x0off.top/ctf-pwn-%E9%87%8C%E7%9A%84%E6%A0%88%E5%AF%B9%E9%BD%90/",
+  "image": "https://0x0off.top/img/20250427020155174569051569879.jpg",
+  "datePublished": "2026-04-28T15:33:51.000Z",
+  "dateModified": "2026-04-28T15:33:51.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "0x0off",
+      "url": "https://0x0off.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/site-avatar-icon.png"><link rel="canonical" href="https://0x0off.top/ctf-pwn-%E9%87%8C%E7%9A%84%E6%A0%88%E5%AF%B9%E9%BD%90/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 18
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":true,"pagination":{"enable":true,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":380,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: true,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"top-right"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'CTF Pwn 里的栈对齐',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/777.png);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/site-avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">9</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">17</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home (首页)</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives (归档)</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags (标签)</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories (分类)</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List (列表)</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music (音乐)</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie (电影)</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/friends/"><i class="fa-fw fas fa-link"></i><span> Link (友链)</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About (关于)</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/20250427020155174569051569879.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">0x0off</span></a><a class="nav-page-title" href="/"><span class="site-name">CTF Pwn 里的栈对齐</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home (首页)</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives (归档)</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags (标签)</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories (分类)</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List (列表)</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music (音乐)</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie (电影)</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/friends/"><i class="fa-fw fas fa-link"></i><span> Link (友链)</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About (关于)</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">CTF Pwn 里的栈对齐</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="fa-fw post-meta-icon far fa-calendar-alt"></i><span class="post-meta-label">发表于</span><time datetime="2026-04-28T15:33:51.000Z" title="发表于 2026-04-28 23:33:51">2026-04-28</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Security/">Security</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Security/Pwn/">Pwn</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Security/Pwn/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/">基础知识</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;It has been&quot;,&quot;messageNext&quot;:&quot;days since the last update, the content of the article may be outdated.&quot;,&quot;postUpdate&quot;:&quot;2026-04-28 23:33:51&quot;}" hidden></div><h1 id="CTF-Pwn-里的栈对齐"><a href="#CTF-Pwn-里的栈对齐" class="headerlink" title="CTF Pwn 里的栈对齐"></a>CTF Pwn 里的栈对齐</h1><p>这份笔记针对这几个问题的一些思考及回答：</p>
+<ol>
+<li>为什么要栈对齐</li>
+<li>栈对齐机制到底是什么</li>
+<li>比赛里怎么修</li>
+<li>常见会踩的坑有哪些</li>
+<li>还能围绕栈对齐发散到哪些实战点</li>
+</ol>
+<p>默认重点讨论 <strong>64 位 Linux (<code>SysV AMD64 ABI</code>)</strong>，因为 CTF 里最常见的“栈对齐炸了”基本都发生在这里。文末单独补 <code>Windows x64</code>。</p>
+<hr>
+<h2 id="1-为什么要栈对齐"><a href="#1-为什么要栈对齐" class="headerlink" title="1. 为什么要栈对齐"></a>1. 为什么要栈对齐</h2><p>在 CTF 里，栈对齐通常不是第一步遇到的问题，而是已经：</p>
+<ul>
+<li>找到了 overflow offset</li>
+<li>找到了 <code>pop rdi ; ret</code></li>
+<li>泄露了 <code>libc</code></li>
+<li>构造好了 <code>system(&quot;/bin/sh&quot;)</code></li>
+</ul>
+<p>结果 <code>send payload</code> 后，却没有<code>get shell</code>，而是程序直接崩了。</p>
+<p>这时候很大概率不是地址算错，也不是 <code>/bin/sh</code> 不对，而是：</p>
+<p> <strong>ROP 链破坏了函数调用时默认成立的栈布局</strong></p>
+<p>这时候就需要完成那最后一步：<strong>栈对齐</strong></p>
+<h3 id="1-1-一句话理解"><a href="#1-1-一句话理解" class="headerlink" title="1.1 一句话理解"></a>1.1 一句话理解</h3><p>所谓栈对齐，本质上就是：</p>
+<blockquote>
+<p>用 <code>ret</code> 伪造函数调用时，是否让目标函数看到一个和正常 <code>call</code> 进入时一致的栈状态。</p>
+</blockquote>
+<p>只要把这句话想明白，后面的现象都能串起来。</p>
+<hr>
+<h2 id="2-栈对齐机制到底是什么"><a href="#2-栈对齐机制到底是什么" class="headerlink" title="2. 栈对齐机制到底是什么"></a>2. 栈对齐机制到底是什么</h2><h3 id="2-1-正常程序为什么“天然对齐”"><a href="#2-1-正常程序为什么“天然对齐”" class="headerlink" title="2.1 正常程序为什么“天然对齐”"></a>2.1 正常程序为什么“天然对齐”</h3><p>在 <code>x86_64 Linux</code> 下，SysV AMD64 ABI 要求：</p>
+<ul>
+<li>在函数入口，<code>(%rsp - 8) % 16 == 0</code></li>
+<li>等价地说，函数入口常写成：<code>rsp % 16 == 8</code></li>
+</ul>
+<p>为什么会是 <code>8</code> 而不是 <code>0</code>？</p>
+<p>因为正常调用是：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">caller:</span><br><span class="line">    ...               ; call 前通常让 rsp % <span class="number">16</span> == <span class="number">0</span></span><br><span class="line">    call target       ; 压入 <span class="number">8</span> 字节返回地址</span><br><span class="line"></span><br><span class="line">target:</span><br><span class="line">    rsp % <span class="number">16</span> == <span class="number">8</span></span><br></pre></td></tr></table></figure>
+
+<p>也就是说：</p>
+<ul>
+<li><strong>调用者在 <code>call</code> 之前</strong>，一般把 <code>rsp</code> 调到 16 对齐</li>
+<li><strong>被调函数在刚入口时</strong>，由于返回地址已经入栈，所以看到的是 <code>rsp % 16 == 8</code></li>
+</ul>
+<h3 id="2-2-为什么-ROP-容易破坏这个机制"><a href="#2-2-为什么-ROP-容易破坏这个机制" class="headerlink" title="2.2 为什么 ROP 容易破坏这个机制"></a>2.2 为什么 ROP 容易破坏这个机制</h3><p>正常程序靠 <code>call</code> 建立调用关系，但 ROP 不是。</p>
+<p>ROP 的核心是：</p>
+<ul>
+<li><code>ret</code> 从栈上弹一个地址</li>
+<li>跳到那个地址继续执行</li>
+<li>再 <code>ret</code></li>
+<li>再跳</li>
+</ul>
+<p><strong>（重点）问题在于：</strong></p>
+<ul>
+<li><code>call</code> 会主动压入返回地址，额外消耗 8 字节</li>
+<li><code>ret</code> 不会“补一次 call”</li>
+</ul>
+<p>所以如果直接：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">payload += p64(pop_rdi_ret)</span><br><span class="line">payload += p64(binsh)</span><br><span class="line">payload += p64(system)</span><br></pre></td></tr></table></figure>
+
+<p>那么你是通过 <code>ret</code> 进入 <code>system()</code>，而不是通过正常的 <code>call system</code> 进入。</p>
+<p>这意味着：</p>
+<ul>
+<li>进入 <code>system</code> 时的 <code>rsp</code></li>
+<li>和编译器、ABI、glibc 设计时预期的 <code>rsp</code>可能不一样。</li>
+</ul>
+<h3 id="2-3-为什么会在-movaps-一类指令处崩"><a href="#2-3-为什么会在-movaps-一类指令处崩" class="headerlink" title="2.3 为什么会在 movaps 一类指令处崩"></a>2.3 为什么会在 <code>movaps</code> 一类指令处崩</h3><p>因为某些函数内部会：</p>
+<ul>
+<li>使用 SSE&#x2F;XMM 指令</li>
+<li>把数据搬到栈上</li>
+<li>假定当前栈满足 ABI 要求</li>
+</ul>
+<p>一旦 ROP 链导致 <code>rsp</code> 不在预期对齐状态，这些路径就可能在对齐敏感指令处出错。比赛里最常见的情况就是：</p>
+<ul>
+<li>“崩在 <code>movaps</code>”</li>
+<li>“明明链子没问题，怎么进 <code>libc</code> 就死了”</li>
+</ul>
+<hr>
+<h2 id="3-从比赛视角理解“对齐”"><a href="#3-从比赛视角理解“对齐”" class="headerlink" title="3. 从比赛视角理解“对齐”"></a>3. 从比赛视角理解“对齐”</h2><p>不要把栈对齐理解成抽象规范，直接把它看成一个比赛里的检查条件：</p>
+<blockquote>
+<p>在“即将进入目标函数”的那一刻，目标函数看到的 <code>rsp</code> 是否像它被正常 <code>call</code> 进来时那样。</p>
+</blockquote>
+<h3 id="3-1-实战结论（习惯）"><a href="#3-1-实战结论（习惯）" class="headerlink" title="3.1 实战结论（习惯）"></a>3.1 实战结论（习惯）</h3><p>如果你要 <strong><code>ret</code> 进某个 <code>libc</code> 函数</strong>，最常见的经验判断是：</p>
+<ul>
+<li>若当前 <code>rsp &amp; 0xf == 0</code>，通常可以直接进</li>
+<li>若当前 <code>rsp &amp; 0xf == 8</code>，通常需要先补一个裸 <code>ret</code></li>
+</ul>
+<p>原因是：</p>
+<ul>
+<li>ROP链执行 <code>ret</code> 进目标函数时，会先弹掉 8 字节目标地址</li>
+<li>所以目标函数真正入口看到的是“当前 <code>rsp + 8</code>”</li>
+<li>当前是 <code>0</code>，进去后变 <code>8</code></li>
+<li>当前是 <code>8</code>，进去后变 <code>0</code></li>
+</ul>
+<p>而 <code>SysV</code> 里目标函数入口常要求 <code>rsp % 16 == 8</code>。</p>
+<h3 id="3-2-为什么“补一个-ret”经常有效"><a href="#3-2-为什么“补一个-ret”经常有效" class="headerlink" title="3.2 为什么“补一个 ret”经常有效"></a>3.2 为什么“补一个 ret”经常有效</h3><p>因为：</p>
+<ul>
+<li>一个裸 <code>ret</code> 会额外吃掉 8 字节</li>
+<li>这正好能把 <code>rsp % 16</code> 在 <code>0</code> 和 <code>8</code> 之间切换</li>
+</ul>
+<p>所以经常看到wp写：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">payload  = <span class="string">b&#x27;A&#x27;</span> * offset</span><br><span class="line">payload += p64(ret)</span><br><span class="line">payload += p64(pop_rdi_ret)</span><br><span class="line">payload += p64(bin_sh_addr)</span><br><span class="line">payload += p64(system_addr)</span><br></pre></td></tr></table></figure>
+
+<p>这个 <code>ret</code> 不是“为了跳转”，而是<strong>纯粹为了修对齐</strong>。</p>
+<h3 id="3-3-示例：为什么这题-system-bin-sh-会炸"><a href="#3-3-示例：为什么这题-system-bin-sh-会炸" class="headerlink" title="3.3 示例：为什么这题 system(&quot;/bin/sh&quot;) 会炸"></a>3.3 示例：为什么这题 <code>system(&quot;/bin/sh&quot;)</code> 会炸</h3><p>假设一题 64 位栈溢出里，已经有：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">offset = <span class="number">0x28</span></span><br><span class="line">pop_rdi_ret = <span class="number">0x4007c3</span></span><br><span class="line">ret = <span class="number">0x400556</span></span><br><span class="line">bin_sh_addr = libc_base + <span class="number">0x1b45bd</span></span><br><span class="line">system_addr = libc_base + <span class="number">0x52290</span></span><br></pre></td></tr></table></figure>
+
+<p>首先我们写出的 payload 是：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">payload  = <span class="string">b&#x27;A&#x27;</span> * <span class="number">0x28</span></span><br><span class="line">payload += p64(pop_rdi_ret)</span><br><span class="line">payload += p64(binsh)</span><br><span class="line">payload += p64(system)</span><br></pre></td></tr></table></figure>
+
+<p>现象：</p>
+<ul>
+<li><code>rdi</code> 确实已经是 <code>&quot;/bin/sh&quot;</code></li>
+<li>程序却在 <code>system</code> 里崩了</li>
+</ul>
+<p>这时不一定是地址或参数构造出错，先看栈消耗：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pop rdi ; ret   -&gt; +<span class="number">0x10</span></span><br></pre></td></tr></table></figure>
+
+<p>也就是说，<code>pop rdi ; ret</code> 不会改变当前 <code>rsp % 16</code> 的状态。假如在“即将进入 <code>system</code> 前”观察到：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rsp &amp; 0xf == 8</span><br></pre></td></tr></table></figure>
+
+<p>那么当 <code>ret</code> 真正跳进 <code>system</code> 后，入口看到的就是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(rsp + 8) &amp; 0xf == 0</span><br></pre></td></tr></table></figure>
+
+<p>这就很容易出问题。</p>
+<p>修法就是补一个裸 <code>ret</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">payload  = <span class="string">b&#x27;A&#x27;</span> * <span class="number">0x28</span></span><br><span class="line">payload += p64(ret)</span><br><span class="line">payload += p64(pop_rdi_ret)</span><br><span class="line">payload += p64(binsh)</span><br><span class="line">payload += p64(system)</span><br></pre></td></tr></table></figure>
+
+<p>这个 <code>ret</code> 会额外多吃 <code>0x8</code>，把当前 <code>rsp % 16</code> 翻转一次，于是 <code>system</code> 真正入口又回到更常见的好状态。</p>
+<h3 id="3-4-示例：为什么有时不补-ret-也能过"><a href="#3-4-示例：为什么有时不补-ret-也能过" class="headerlink" title="3.4 示例：为什么有时不补 ret 也能过"></a>3.4 示例：为什么有时不补 <code>ret</code> 也能过</h3><p>第一阶段泄露：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">payload  = <span class="string">b&#x27;A&#x27;</span> * offset</span><br><span class="line">payload += p64(pop_rdi_ret)</span><br><span class="line">payload += p64(puts_got_addr)</span><br><span class="line">payload += p64(puts_plt_addr)</span><br><span class="line">payload += p64(vuln_addr)</span><br></pre></td></tr></table></figure>
+
+<p>第二阶段拿 shell：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">payload  = <span class="string">b&#x27;A&#x27;</span> * offset</span><br><span class="line">payload += p64(pop_rdi_ret)</span><br><span class="line">payload += p64(bin_sh_addr)</span><br><span class="line">payload += p64(system_addr)</span><br></pre></td></tr></table></figure>
+
+<p>可能出现：</p>
+<ul>
+<li>第一阶段泄露正常</li>
+<li>第二阶段 <code>system</code> 崩</li>
+</ul>
+<p>原因通常不是“<code>puts</code> 不需要对齐而 <code>system</code> 需要”，而是：</p>
+<ul>
+<li>第一阶段整条链的总栈消耗，碰巧让 <code>puts@plt</code> 入口对齐了，完成了“栈对齐”</li>
+<li>第二阶段链更短，反而把 <code>system</code> 放进了坏状态，没做到“栈对齐”</li>
+</ul>
+<p>所以要记住：</p>
+<ul>
+<li><strong>对齐不是某个固定模板</strong></li>
+<li><strong>而是和这一阶段整条链总共吃了多少栈绑定的</strong></li>
+</ul>
+<hr>
+<h2 id="4-比赛里如何判断是不是栈没对齐"><a href="#4-比赛里如何判断是不是栈没对齐" class="headerlink" title="4. 比赛里如何判断是不是栈没对齐"></a>4. 比赛里如何判断是不是栈没对齐</h2><h3 id="4-1-现象判断"><a href="#4-1-现象判断" class="headerlink" title="4.1 现象判断"></a>4.1 现象判断</h3><p>以下情况都要优先怀疑栈对齐：</p>
+<ul>
+<li><code>ret2libc</code> 参数看起来都对，但 <code>system()</code> 进不去</li>
+<li>能正常泄露 <code>libc</code> ，但<code>get shell</code> 崩了</li>
+<li>崩在 <code>movaps</code></li>
+<li>崩在 <code>do_system</code> &#x2F; <code>buffered_vfprintf</code></li>
+<li>同一条链，本地能打，远程换 libc 后炸</li>
+</ul>
+<p>最后一种尤其常见，因为：</p>
+<ul>
+<li>不同 <code>libc</code> 版本内部实现不同</li>
+<li>有的版本内部路径刚好用到对齐敏感指令</li>
+<li>有的版本没走到</li>
+</ul>
+<p>于是就出现经典的“为什么本地通，远程不通”（இдஇ）</p>
+<h3 id="4-2-GDB-pwndbg-里怎么查"><a href="#4-2-GDB-pwndbg-里怎么查" class="headerlink" title="4.2 GDB &#x2F; pwndbg 里怎么查"></a>4.2 GDB &#x2F; pwndbg 里怎么查</h3><p>比赛里最直接的检查：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">p/x $rsp</span><br><span class="line">p/x $rsp &amp; 0xf</span><br><span class="line">x/10gx $rsp</span><br></pre></td></tr></table></figure>
+
+<p>重点不是只看 crash 点，而是看两个位置：</p>
+<ol>
+<li>漏洞函数即将第一次 <code>ret</code> 进 ROP 链时</li>
+<li>即将 <code>ret</code> 进目标函数时</li>
+</ol>
+<p>因为你真正想知道的是：</p>
+<ul>
+<li>ROP链一共吃掉了多少字节</li>
+<li>到目标函数入口前，<code>rsp</code> 的低 4 bit 变成了什么</li>
+</ul>
+<h3 id="4-3-最稳的办法：手算每个-gadget-吃多少栈"><a href="#4-3-最稳的办法：手算每个-gadget-吃多少栈" class="headerlink" title="4.3 最稳的办法：手算每个 gadget 吃多少栈"></a>4.3 最稳的办法：手算每个 gadget 吃多少栈</h3><p>常见 gadget 的栈消耗：</p>
+<table>
+<thead>
+<tr>
+<th>gadget</th>
+<th>消耗</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ret</code></td>
+<td><code>0x8</code></td>
+</tr>
+<tr>
+<td><code>pop rdi ; ret</code></td>
+<td><code>0x10</code></td>
+</tr>
+<tr>
+<td><code>pop rsi ; pop r15 ; ret</code></td>
+<td><code>0x18</code></td>
+</tr>
+<tr>
+<td><code>pop rbx ; pop rbp ; pop r12 ; pop r13 ; pop r14 ; pop r15 ; ret</code></td>
+<td><code>0x38</code></td>
+</tr>
+<tr>
+<td><code>leave ; ret</code></td>
+<td>特殊，需要结合当时 <code>rbp</code> 分析</td>
+</tr>
+<tr>
+<td><code>add rsp, 0x28 ; ret</code></td>
+<td><code>0x30</code></td>
+</tr>
+</tbody></table>
+<h3 id="4-4-手算示例：一条链到底怎么数"><a href="#4-4-手算示例：一条链到底怎么数" class="headerlink" title="4.4 手算示例：一条链到底怎么数"></a>4.4 手算示例：一条链到底怎么数</h3><p>假设ROP链长这样：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">payload  = <span class="string">b&#x27;A&#x27;</span> * offset</span><br><span class="line">payload += p64(ret)</span><br><span class="line">payload += p64(pop_rdi_ret)</span><br><span class="line">payload += p64(bin_sh_addr)</span><br><span class="line">payload += p64(pop_rsi_r15_ret)</span><br><span class="line">payload += p64(<span class="number">0</span>)</span><br><span class="line">payload += p64(<span class="number">0</span>)</span><br><span class="line">payload += p64(system_addr)</span><br></pre></td></tr></table></figure>
+
+<p>其中：</p>
+<ul>
+<li><code>ret</code> 消耗 <code>0x8</code></li>
+<li><code>pop rdi ; ret</code> 消耗 <code>0x10</code></li>
+<li><code>pop rsi ; pop r15 ; ret</code> 消耗 <code>0x18</code></li>
+</ul>
+<p>那么到真正进入 <code>system</code> 之前，一共消耗：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0x8 + 0x10 + 0x18 = 0x30</span><br></pre></td></tr></table></figure>
+
+<p>而：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0x30 % 0x10 == 0</span><br></pre></td></tr></table></figure>
+
+<p>说明这一整段 gadget 合起来，并不会改变最初的 <code>rsp % 16</code>。所以最后能不能稳定进 <code>system</code>，关键仍然取决于：</p>
+<ul>
+<li>漏洞函数第一次 <code>ret</code> 进 ROP 链时，起始 <code>rsp &amp; 0xf</code> 是多少，即：初始值是多少</li>
+</ul>
+<hr>
+<h2 id="5-比赛里最常见的栈对齐修法"><a href="#5-比赛里最常见的栈对齐修法" class="headerlink" title="5. 比赛里最常见的栈对齐修法"></a>5. 比赛里最常见的栈对齐修法</h2><h3 id="5-1-方法一：在目标函数前补一个裸-ret"><a href="#5-1-方法一：在目标函数前补一个裸-ret" class="headerlink" title="5.1 方法一：在目标函数前补一个裸 ret"></a>5.1 方法一：在目标函数前补一个裸 <code>ret</code></h3><p>适用场景：</p>
+<ul>
+<li>64 位 <code>ret2libc</code></li>
+<li><code>system(&quot;/bin/sh&quot;)</code></li>
+<li><code>one_gadget</code></li>
+<li>返回 libc 中其他函数前崩在 <code>movaps</code></li>
+</ul>
+<p>示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">payload  = <span class="string">b&#x27;A&#x27;</span> * offset</span><br><span class="line">payload += p64(ret)            <span class="comment"># alignment</span></span><br><span class="line">payload += p64(pop_rdi_ret)</span><br><span class="line">payload += p64(bin_sh_addr)</span><br><span class="line">payload += p64(system_addr)</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-2-方法二：换-gadget"><a href="#5-2-方法二：换-gadget" class="headerlink" title="5.2 方法二：换 gadget"></a>5.2 方法二：换 gadget</h3><p>很多时候不用专门补 <code>ret</code>，而是：</p>
+<ul>
+<li>换一个 gadget</li>
+<li>栈消耗就变了</li>
+<li>对齐自然就修好了</li>
+</ul>
+<p>例如：</p>
+<ul>
+<li><code>pop rdi ; ret</code> 消耗 <code>0x10</code></li>
+<li><code>pop rsi ; pop r15 ; ret</code> 消耗 <code>0x18</code></li>
+</ul>
+<p>后者比前者多一个 8 字节槽位，会翻转对齐状态。</p>
+<p>所以比赛里你会遇到这种情况：</p>
+<ul>
+<li>明明只改了一个 gadget</li>
+<li>参数也没变</li>
+<li>结果 <code>system</code> 从崩溃变成能打通</li>
+</ul>
+<p>这通常就是对齐被顺手修了(◔౪◔)</p>
+<h3 id="5-3-修法三：调整-pivot-目标地址"><a href="#5-3-修法三：调整-pivot-目标地址" class="headerlink" title="5.3 修法三：调整 pivot 目标地址"></a>5.3 修法三：调整 pivot 目标地址</h3><p>如果是下面这几种情况：</p>
+<ul>
+<li>栈迁移到 <code>.bss</code></li>
+<li>栈迁移到 heap</li>
+<li>栈迁移到 <code>mmap</code></li>
+<li><code>leave ; ret</code></li>
+<li><code>xchg rsp, rax ; ret</code></li>
+</ul>
+<p>那么对齐修法经常不是“补一个 ret”，而是：</p>
+<ul>
+<li>直接让 fake stack 起始地址低 4 bit 合适</li>
+<li>让 pivot 之后第一段链自然对齐</li>
+</ul>
+<p>这在大链、二阶段 ROP、<code>read</code> 写假栈时很常见。</p>
+<h3 id="5-4-修法四：跳过函数序言的一部分"><a href="#5-4-修法四：跳过函数序言的一部分" class="headerlink" title="5.4 修法四：跳过函数序言的一部分"></a>5.4 修法四：跳过函数序言的一部分</h3><p>有些时候题解会写：</p>
+<ul>
+<li>不回函数开头</li>
+<li>而是回到 <code>win+5</code>、<code>system+X</code> 这类位置</li>
+</ul>
+<p>其目的可能是：</p>
+<ul>
+<li>绕开某条 <code>push</code></li>
+<li>绕开某段影响栈布局的前导代码</li>
+</ul>
+<p>这招能用，但风险也最大。因为它要求你很清楚：</p>
+<ul>
+<li>跳过后是否破坏函数语义</li>
+<li>会不会跳进半个 basic block</li>
+<li>会不会漏掉必须执行的寄存器初始化</li>
+</ul>
+<p>比赛里能不用就尽量不用，除非真的全懂了（hh，怎么可能ㅍ_ㅍ）</p>
+<h3 id="5-5-示例：二阶段-ROP-pivot-时怎么想"><a href="#5-5-示例：二阶段-ROP-pivot-时怎么想" class="headerlink" title="5.5 示例：二阶段 ROP + pivot 时怎么想"></a>5.5 示例：二阶段 ROP + pivot 时怎么想</h3><p>假设题目流程是：</p>
+<ol>
+<li>第一阶段 overflow</li>
+<li>调 <code>read(0, bss, 0x400)</code> 把第二阶段链写进 <code>.bss</code></li>
+<li>用 <code>leave ; ret</code> 或其他 gadget pivot 到 <code>.bss</code></li>
+<li>第二阶段在 <code>.bss</code> 上执行 <code>system(&quot;/bin/sh&quot;)</code></li>
+</ol>
+<p>很多人只关心：</p>
+<ul>
+<li><code>.bss</code> 是否可写</li>
+<li><code>read</code> 是否写成功</li>
+<li>pivot 是否成功</li>
+</ul>
+<p>但这里还必须关心：</p>
+<ul>
+<li><strong>fake stack 起始地址的低 4 bit</strong></li>
+</ul>
+<p>例如你把假栈放在：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0x404080</span><br></pre></td></tr></table></figure>
+
+<p>那它低 4 bit 是 <code>0x0</code>；如果你放在：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0x404088</span><br></pre></td></tr></table></figure>
+
+<p>那低 4 bit 就是 <code>0x8</code>。</p>
+<p>这 8 字节差异，可能就决定了：</p>
+<ul>
+<li>第二阶段 <code>system</code> 是否稳定</li>
+<li>还要不要额外补一个 <code>ret</code></li>
+</ul>
+<p>所以 pivot 题里一个很实用的思路是：</p>
+<ul>
+<li>不只是“把链写到 <code>.bss</code>”</li>
+<li>而是“把链写到 <code>.bss + 合适偏移</code>”</li>
+</ul>
+<hr>
+<h2 id="6-CTF-里最常见的坑"><a href="#6-CTF-里最常见的坑" class="headerlink" title="6. CTF 里最常见的坑"></a>6. CTF 里最常见的坑</h2><h3 id="6-1-坑一：不知道在哪里进行栈对齐"><a href="#6-1-坑一：不知道在哪里进行栈对齐" class="headerlink" title="6.1 坑一：不知道在哪里进行栈对齐"></a>6.1 坑一：不知道在哪里进行栈对齐</h3><p>最典的：</p>
+<p>记住了“栈要 16 对齐”，但不知道是在 <code>call</code> 前还是函数入口</p>
+<p>正确理解应该是：</p>
+<ul>
+<li><code>call</code> 前，调用者常让 <code>rsp % 16 == 0</code></li>
+<li>callee 刚入口时，常看到 <code>rsp % 16 == 8</code></li>
+</ul>
+<h3 id="6-2-坑二：认为-system-前一定要加-ret"><a href="#6-2-坑二：认为-system-前一定要加-ret" class="headerlink" title="6.2 坑二：认为 system() 前一定要加 ret"></a>6.2 坑二：认为 <code>system()</code> 前一定要加 <code>ret</code></h3><p>ctfshow pwn040 刚错在这….)</p>
+<p>更准确地说：</p>
+<ul>
+<li><strong>当当前的 <code>rsp</code> 状态不对</strong>，才需要用 <code>ret</code> 修</li>
+<li>如果本来就对，就不该无脑加</li>
+</ul>
+<p>虽然在很多题里“加个 <code>ret</code>”确实能过，但也要理解为什么。</p>
+<p>ps：想偷懒也可以多加几个ret，都试试，万一成了呢……</p>
+<h3 id="6-3-坑三：本地通，远程死活不通，然后-“远端环境有问题吧-Д´-ﾉ”"><a href="#6-3-坑三：本地通，远程死活不通，然后-“远端环境有问题吧-Д´-ﾉ”" class="headerlink" title="6.3 坑三：本地通，远程死活不通，然后:“远端环境有问题吧(#&#96;Д´)ﾉ”"></a>6.3 坑三：本地通，远程死活不通，然后:“远端环境有问题吧(#&#96;Д´)ﾉ”</h3><p>很多人本地测通后直接打远程，结果远程炸了，第一反应是：</p>
+<ul>
+<li><code>libc</code> 不一样</li>
+<li>偏移不对</li>
+<li><code>one_gadget</code> 条件没满足</li>
+<li>环境有问题吧…..</li>
+</ul>
+<p>这些当然都可能，但大概率是栈对齐。</p>
+<h3 id="6-4-坑四：只盯-pop-rdi-ret，忽略整条链的总消耗"><a href="#6-4-坑四：只盯-pop-rdi-ret，忽略整条链的总消耗" class="headerlink" title="6.4 坑四：只盯 pop rdi ; ret，忽略整条链的总消耗"></a>6.4 坑四：只盯 <code>pop rdi ; ret</code>，忽略整条链的总消耗</h3><p>很多初学者（比如我ฅ●ω●ฅ）只会盯住：</p>
+<ul>
+<li><code>pop rdi ; ret</code></li>
+<li><code>system</code></li>
+</ul>
+<p>但对齐从来不是看两个 gadget，而是看：</p>
+<ul>
+<li>从第一次 <code>ret</code> 进链开始</li>
+<li>到目标函数真正入口为止</li>
+<li>一共吃掉了多少个 8 字节槽</li>
+</ul>
+<p>任何一个长 gadget、<code>ret2csu</code>、栈迁移、额外的 <code>pop</code>，都可能改变结果。</p>
+<h3 id="6-5-坑五：pivot-成功了，但最后脚本不通"><a href="#6-5-坑五：pivot-成功了，但最后脚本不通" class="headerlink" title="6.5 坑五：pivot 成功了，但最后脚本不通"></a>6.5 坑五：pivot 成功了，但最后脚本不通</h3><p>很多题里：</p>
+<ul>
+<li><code>.bss</code> 假栈写进去了</li>
+<li><code>leave ; ret</code> 也进去了</li>
+<li>但 <code>system</code> 还是炸</li>
+</ul>
+<p>这通常说明：</p>
+<ul>
+<li>pivot 本身成功</li>
+<li>但 pivot 后 fake stack 的起始位置没对齐</li>
+<li>或者 pivot 后第一段 gadget 数量把对齐又翻掉了</li>
+</ul>
+<hr>
+<h2 id="7-围绕栈对齐还能扩展到哪些比赛场景"><a href="#7-围绕栈对齐还能扩展到哪些比赛场景" class="headerlink" title="7. 围绕栈对齐还能扩展到哪些比赛场景"></a>7. 围绕栈对齐还能扩展到哪些比赛场景</h2><h3 id="7-1-ret2libc"><a href="#7-1-ret2libc" class="headerlink" title="7.1 ret2libc"></a>7.1 ret2libc</h3><p>这是最经典场景。</p>
+<p>尤其是：</p>
+<ul>
+<li><code>pop rdi ; ret</code></li>
+<li><code>&quot;/bin/sh&quot;</code></li>
+<li><code>system</code></li>
+</ul>
+<p>这套模板里最常见的额外一项，就是补一个 空 <code>ret</code>。</p>
+<h3 id="7-2-puts-plt-泄露-回到-vuln-再打第二阶段"><a href="#7-2-puts-plt-泄露-回到-vuln-再打第二阶段" class="headerlink" title="7.2 puts@plt 泄露 + 回到 vuln 再打第二阶段"></a>7.2 <code>puts@plt</code> 泄露 + 回到 vuln 再打第二阶段</h3><p>第一阶段经常没炸，第二阶段突然炸，原因可能是：</p>
+<ul>
+<li>第一阶段链短，碰巧对齐</li>
+<li>第二阶段链长，或者多了几个 gadget，结果不对齐了</li>
+</ul>
+<p>所以不能因为泄露阶段稳定，就默认第二阶段也稳定。</p>
+<h3 id="7-3-ret2csu"><a href="#7-3-ret2csu" class="headerlink" title="7.3 ret2csu"></a>7.3 <code>ret2csu</code></h3><p><code>ret2csu</code> 常用来控 <code>rdi/rsi/rdx</code>，但它的 gadget 很长，典型形态是：</p>
+<ul>
+<li>一串 <code>pop</code></li>
+<li>再 <code>ret</code></li>
+</ul>
+<p>这种链极容易改变 <code>rsp % 16</code>，所以每次用完 <code>csu</code> 最好都重新算一次对齐。</p>
+<h3 id="7-4-栈迁移"><a href="#7-4-栈迁移" class="headerlink" title="7.4 栈迁移"></a>7.4 栈迁移</h3><p><code>leave ; ret</code>、<code>xchg rsp, rax ; ret</code>、<code>mov rsp, xxx ; ret</code> 这些技巧里，栈对齐会和 fake stack 设计绑死在一起。</p>
+<p>同样需要考虑：</p>
+<ul>
+<li>fake stack 放哪</li>
+<li>起始地址低 4 bit 是多少</li>
+<li>第一段链的 gadget 消耗</li>
+<li>最终进入 <code>libc</code>函数前 <code>rsp</code> 变成什么，是否栈对齐了</li>
+</ul>
+<h3 id="7-5-SROP"><a href="#7-5-SROP" class="headerlink" title="7.5 SROP"></a>7.5 SROP</h3><p><code>Sigreturn Oriented Programming</code> 里，虽然重点是伪造 signal frame，但本质上仍然和“栈上布局是否符合预期”有关。它不一定表现为普通 <code>movaps</code> 崩溃，但仍然是在和 ABI&#x2F;内核期望的栈结构打交道。</p>
+<h3 id="7-6-one-gadget"><a href="#7-6-one-gadget" class="headerlink" title="7.6 one_gadget"></a>7.6 one_gadget</h3><p>很多人把 <code>one_gadget</code> 打不通都归因到约束条件，其实还有一种情况：</p>
+<ul>
+<li>地址对</li>
+<li>约束也差不多满足</li>
+<li>但进入前栈状态不对</li>
+</ul>
+<p>所以打 <code>one_gadget</code> 也建议顺手检查对齐。</p>
+<h3 id="7-7-格式化字符串接-ROP"><a href="#7-7-格式化字符串接-ROP" class="headerlink" title="7.7 格式化字符串接 ROP"></a>7.7 格式化字符串接 ROP</h3><p>如果题目是：</p>
+<ul>
+<li>先 fmt leak</li>
+<li>再劫持返回地址</li>
+<li>再走 ROP</li>
+</ul>
+<p>那么最终还是会回到“进入 libc 函数前的栈状态”这个问题。前面利用原语不同，不改变后面 ROP 对对齐的要求。</p>
+<h3 id="7-8-一个很实用的比赛习惯：给-exp-留一个对齐开关"><a href="#7-8-一个很实用的比赛习惯：给-exp-留一个对齐开关" class="headerlink" title="7.8 一个很实用的比赛习惯：给 exp 留一个对齐开关"></a>7.8 一个很实用的比赛习惯：给 exp 留一个对齐开关</h3><p>很多比赛里，最快的排障方式不是先完全算死，而是给 exp 留一个可切换的 alignment 开关：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">need_align = <span class="literal">True</span></span><br><span class="line"></span><br><span class="line">payload  = <span class="string">b&#x27;A&#x27;</span> * offset</span><br><span class="line"><span class="keyword">if</span> need_align:</span><br><span class="line">    payload += p64(ret)</span><br><span class="line">payload += p64(pop_rdi_ret)</span><br><span class="line">payload += p64(binsh)</span><br><span class="line">payload += p64(system)</span><br></pre></td></tr></table></figure>
+
+<p>这样你可以很快验证两件事：</p>
+<ul>
+<li>加 <code>ret</code> 和不加 <code>ret</code> 的行为差异</li>
+<li>远程崩溃是不是高概率由对齐引起</li>
+</ul>
+<hr>
+<h2 id="8-一个建议的比赛检查流程"><a href="#8-一个建议的比赛检查流程" class="headerlink" title="8. 一个建议的比赛检查流程"></a>8. 一个建议的比赛检查流程</h2><p>当你怀疑自己被栈对齐卡住时，可以按这个顺序排：</p>
+<ol>
+<li>确认溢出 offset 没错</li>
+<li>确认 gadget 地址和 libc 基址没错</li>
+<li>确认参数寄存器值没错，<code>/bin/sh</code> 地址可读</li>
+<li>看 crash 点是否在 <code>movaps</code> &#x2F; <code>system</code> &#x2F; <code>vfprintf</code> 一类位置</li>
+<li>在“即将进入目标函数”前检查 <code>rsp &amp; 0xf</code></li>
+<li>若不对，先试补一个裸 <code>ret</code></li>
+<li>若还不对，重新统计整条链的栈消耗</li>
+<li>若有 pivot，连 fake stack 起始地址一起重算</li>
+</ol>
+<hr>
+<h2 id="9-Linux-和-Windows-的区别-真遇见我就躺了……"><a href="#9-Linux-和-Windows-的区别-真遇见我就躺了……" class="headerlink" title="9. Linux 和 Windows 的区别(真遇见我就躺了……)"></a>9. Linux 和 Windows 的区别(真遇见我就躺了……)</h2><p>比赛里大多数题是 Linux，但也可能也会碰到 Windows pwn，所以简单写一下差异。</p>
+<h3 id="9-1-Linux-SysV-AMD64"><a href="#9-1-Linux-SysV-AMD64" class="headerlink" title="9.1 Linux &#x2F; SysV AMD64"></a>9.1 Linux &#x2F; SysV AMD64</h3><p>重点：</p>
+<ul>
+<li>前 6 个参数走 <code>rdi, rsi, rdx, rcx, r8, r9</code></li>
+<li>函数入口常见状态是 <code>rsp % 16 == 8</code></li>
+<li>有 128-byte red zone</li>
+</ul>
+<h3 id="9-2-Windows-x64"><a href="#9-2-Windows-x64" class="headerlink" title="9.2 Windows x64"></a>9.2 Windows x64</h3><p>重点：</p>
+<ul>
+<li>前 4 个参数走 <code>rcx, rdx, r8, r9</code></li>
+<li>caller 需要预留 <strong>32 字节 shadow space</strong></li>
+<li><code>rsp</code> 以下内存不应当像 SysV red zone 那样被默认信任</li>
+</ul>
+<p>所以 WinROP 除了对齐，还要额外考虑：</p>
+<ul>
+<li>shadow space 是否留够</li>
+<li>假栈是否可写</li>
+<li>API 序言是否会把寄存器 spill 到栈上</li>
+</ul>
+<hr>
+<h2 id="10-总结"><a href="#10-总结" class="headerlink" title="10. 总结"></a>10. 总结</h2><ol>
+<li><strong>ROP 是用 <code>ret</code> 伪造 <code>call</code>，所以栈状态不一定天然正确。</strong></li>
+<li><strong>64 位 Linux 下，目标函数入口常希望看到 <code>rsp % 16 == 8</code>。</strong></li>
+<li><strong>比赛里最常见修法是在目标函数前补一个空 <code>ret</code>，但本质上还是要算整条链。</strong></li>
+</ol>
+<div class="post-disclaimer"><div class="post-disclaimer__title">宇宙级免责声明</div><div class="post-disclaimer__intro">重要声明：本文仅供合法授权下的安全研究与教育目的！</div><ol class="post-disclaimer__list"><li>合法授权：本文所述技术仅适用于已获得明确书面授权的目标或自己的靶场内系统。未经授权的渗透测试、漏洞扫描或暴力破解行为均属违法，可能导致法律后果（包括但不限于刑事指控、民事诉讼及巨额赔偿）。</li><li>道德约束：黑客精神的核心是建设而非破坏。请确保你的行为符合道德规范，仅用于提升系统安全性，而非恶意入侵、数据窃取或服务干扰。</li><li>风险自担：使用本文所述工具和技术时，你需自行承担所有风险。作者及发布平台不对任何滥用、误用或由此引发的法律问题负责。</li><li>合规性：确保你的测试符合当地及国际法律法规（如《计算机欺诈与滥用法案》（CFAA）、《通用数据保护条例》（GDPR）等）。必要时，咨询法律顾问。</li><li>最小影响原则：测试过程中应避免对目标系统造成破坏或服务中断。建议在非生产环境或沙箱环境中进行演练。</li><li>数据保护：不得访问、存储或泄露任何未授权的用户数据。如意外获取敏感信息，应立即报告相关方并删除。</li><li>免责范围：作者、平台及关联方明确拒绝承担因读者行为导致的任何直接、间接、附带或惩罚性损害责任。</li></ol><div class="post-disclaimer__section-title">安全研究的正确姿势：</div><ul class="post-disclaimer__checks"><li>先授权，再测试</li><li>只针对自己拥有或有权测试的系统</li><li>发现漏洞后，及时报告并协助修复</li><li>尊重隐私，不越界</li></ul><div class="post-disclaimer__warning">警告：技术无善恶，人心有黑白。请明智选择你的道路。</div><div class="post-disclaimer__source">声明参考链接：<a href="https://blog.csdn.net/2402_84408069/article/details/157263936" target="_blank" rel="noopener noreferrer">https://blog.csdn.net/2402_84408069/article/details/157263936</a></div></div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://0x0off.top">0x0off</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://0x0off.top/ctf-pwn-%E9%87%8C%E7%9A%84%E6%A0%88%E5%AF%B9%E9%BD%90/">https://0x0off.top/ctf-pwn-%E9%87%8C%E7%9A%84%E6%A0%88%E5%AF%B9%E9%BD%90/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://0x0off.top" target="_blank">0x0off</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/ret2libc/">ret2libc</a><a class="post-meta__tags" href="/tags/ROP/">ROP</a><a class="post-meta__tags" href="/tags/%E6%A0%88%E5%AF%B9%E9%BD%90/">栈对齐</a></div><div class="post-share"><div class="social-share" data-image="/img/20250427020155174569051569879.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/ctfshow-pwn031-ret2libc-bypass-pie/" title="ctfshow pwn031 ret2libc-绕过PIE"><img class="cover" src="/img/223547r7VNn.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">ctfshow pwn031 ret2libc-绕过PIE</div></div><div class="info-2"><div class="info-item-1">结合 ctfshow pwn031 复盘在 PIE 开启场景下的 ret2libc 利用思路，重点整理基址泄露、ebx 修复与两阶段 payload 的构造过程。</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/ret2libc-detailed-analysis/" title="ret2libc 分析（详细版）"><img class="cover" src="/img/1.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-26</div><div class="info-item-2">ret2libc 分析（详细版）</div></div><div class="info-2"><div class="info-item-1">结合 ctfshow pwn30 复盘 ret2libc 的基本打法，以及题目不给 libc 时用 LibcSearcher、glibc-all-in-one 和 patchelf 缩小并验证候选环境的思路。</div></div></div></a><a class="pagination-related" href="/ctfshow-pwn031-ret2libc-bypass-pie/" title="ctfshow pwn031 ret2libc-绕过PIE"><img class="cover" src="/img/223547r7VNn.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-27</div><div class="info-item-2">ctfshow pwn031 ret2libc-绕过PIE</div></div><div class="info-2"><div class="info-item-1">结合 ctfshow pwn031 复盘在 PIE 开启场景下的 ret2libc 利用思路，重点整理基址泄露、ebx 修复与两阶段 payload 的构造过程。</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/site-avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="author-info-name">0x0off</div><div class="author-info-description">0x0off 的个人博客</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">9</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">17</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><a id="card-info-btn" href="/about/"><i class="fas fa-user"></i><span>关于博主</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/Sy-dream" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:1945184830@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">记录 Pwn / Web / CTF 复盘与踩坑过程</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#CTF-Pwn-%E9%87%8C%E7%9A%84%E6%A0%88%E5%AF%B9%E9%BD%90"><span class="toc-text">CTF Pwn 里的栈对齐</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%A0%88%E5%AF%B9%E9%BD%90"><span class="toc-text">1. 为什么要栈对齐</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E4%B8%80%E5%8F%A5%E8%AF%9D%E7%90%86%E8%A7%A3"><span class="toc-text">1.1 一句话理解</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%A0%88%E5%AF%B9%E9%BD%90%E6%9C%BA%E5%88%B6%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">2. 栈对齐机制到底是什么</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E6%AD%A3%E5%B8%B8%E7%A8%8B%E5%BA%8F%E4%B8%BA%E4%BB%80%E4%B9%88%E2%80%9C%E5%A4%A9%E7%84%B6%E5%AF%B9%E9%BD%90%E2%80%9D"><span class="toc-text">2.1 正常程序为什么“天然对齐”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E4%B8%BA%E4%BB%80%E4%B9%88-ROP-%E5%AE%B9%E6%98%93%E7%A0%B4%E5%9D%8F%E8%BF%99%E4%B8%AA%E6%9C%BA%E5%88%B6"><span class="toc-text">2.2 为什么 ROP 容易破坏这个机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E5%9C%A8-movaps-%E4%B8%80%E7%B1%BB%E6%8C%87%E4%BB%A4%E5%A4%84%E5%B4%A9"><span class="toc-text">2.3 为什么会在 movaps 一类指令处崩</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E4%BB%8E%E6%AF%94%E8%B5%9B%E8%A7%86%E8%A7%92%E7%90%86%E8%A7%A3%E2%80%9C%E5%AF%B9%E9%BD%90%E2%80%9D"><span class="toc-text">3. 从比赛视角理解“对齐”</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%AE%9E%E6%88%98%E7%BB%93%E8%AE%BA%EF%BC%88%E4%B9%A0%E6%83%AF%EF%BC%89"><span class="toc-text">3.1 实战结论（习惯）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E4%B8%BA%E4%BB%80%E4%B9%88%E2%80%9C%E8%A1%A5%E4%B8%80%E4%B8%AA-ret%E2%80%9D%E7%BB%8F%E5%B8%B8%E6%9C%89%E6%95%88"><span class="toc-text">3.2 为什么“补一个 ret”经常有效</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E7%A4%BA%E4%BE%8B%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E9%A2%98-system-bin-sh-%E4%BC%9A%E7%82%B8"><span class="toc-text">3.3 示例：为什么这题 system(&quot;&#x2F;bin&#x2F;sh&quot;) 会炸</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E7%A4%BA%E4%BE%8B%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E6%97%B6%E4%B8%8D%E8%A1%A5-ret-%E4%B9%9F%E8%83%BD%E8%BF%87"><span class="toc-text">3.4 示例：为什么有时不补 ret 也能过</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E6%AF%94%E8%B5%9B%E9%87%8C%E5%A6%82%E4%BD%95%E5%88%A4%E6%96%AD%E6%98%AF%E4%B8%8D%E6%98%AF%E6%A0%88%E6%B2%A1%E5%AF%B9%E9%BD%90"><span class="toc-text">4. 比赛里如何判断是不是栈没对齐</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E7%8E%B0%E8%B1%A1%E5%88%A4%E6%96%AD"><span class="toc-text">4.1 现象判断</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-GDB-pwndbg-%E9%87%8C%E6%80%8E%E4%B9%88%E6%9F%A5"><span class="toc-text">4.2 GDB &#x2F; pwndbg 里怎么查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E6%9C%80%E7%A8%B3%E7%9A%84%E5%8A%9E%E6%B3%95%EF%BC%9A%E6%89%8B%E7%AE%97%E6%AF%8F%E4%B8%AA-gadget-%E5%90%83%E5%A4%9A%E5%B0%91%E6%A0%88"><span class="toc-text">4.3 最稳的办法：手算每个 gadget 吃多少栈</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E6%89%8B%E7%AE%97%E7%A4%BA%E4%BE%8B%EF%BC%9A%E4%B8%80%E6%9D%A1%E9%93%BE%E5%88%B0%E5%BA%95%E6%80%8E%E4%B9%88%E6%95%B0"><span class="toc-text">4.4 手算示例：一条链到底怎么数</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E6%AF%94%E8%B5%9B%E9%87%8C%E6%9C%80%E5%B8%B8%E8%A7%81%E7%9A%84%E6%A0%88%E5%AF%B9%E9%BD%90%E4%BF%AE%E6%B3%95"><span class="toc-text">5. 比赛里最常见的栈对齐修法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E6%96%B9%E6%B3%95%E4%B8%80%EF%BC%9A%E5%9C%A8%E7%9B%AE%E6%A0%87%E5%87%BD%E6%95%B0%E5%89%8D%E8%A1%A5%E4%B8%80%E4%B8%AA%E8%A3%B8-ret"><span class="toc-text">5.1 方法一：在目标函数前补一个裸 ret</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E6%96%B9%E6%B3%95%E4%BA%8C%EF%BC%9A%E6%8D%A2-gadget"><span class="toc-text">5.2 方法二：换 gadget</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-%E4%BF%AE%E6%B3%95%E4%B8%89%EF%BC%9A%E8%B0%83%E6%95%B4-pivot-%E7%9B%AE%E6%A0%87%E5%9C%B0%E5%9D%80"><span class="toc-text">5.3 修法三：调整 pivot 目标地址</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-%E4%BF%AE%E6%B3%95%E5%9B%9B%EF%BC%9A%E8%B7%B3%E8%BF%87%E5%87%BD%E6%95%B0%E5%BA%8F%E8%A8%80%E7%9A%84%E4%B8%80%E9%83%A8%E5%88%86"><span class="toc-text">5.4 修法四：跳过函数序言的一部分</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-%E7%A4%BA%E4%BE%8B%EF%BC%9A%E4%BA%8C%E9%98%B6%E6%AE%B5-ROP-pivot-%E6%97%B6%E6%80%8E%E4%B9%88%E6%83%B3"><span class="toc-text">5.5 示例：二阶段 ROP + pivot 时怎么想</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-CTF-%E9%87%8C%E6%9C%80%E5%B8%B8%E8%A7%81%E7%9A%84%E5%9D%91"><span class="toc-text">6. CTF 里最常见的坑</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-%E5%9D%91%E4%B8%80%EF%BC%9A%E4%B8%8D%E7%9F%A5%E9%81%93%E5%9C%A8%E5%93%AA%E9%87%8C%E8%BF%9B%E8%A1%8C%E6%A0%88%E5%AF%B9%E9%BD%90"><span class="toc-text">6.1 坑一：不知道在哪里进行栈对齐</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-2-%E5%9D%91%E4%BA%8C%EF%BC%9A%E8%AE%A4%E4%B8%BA-system-%E5%89%8D%E4%B8%80%E5%AE%9A%E8%A6%81%E5%8A%A0-ret"><span class="toc-text">6.2 坑二：认为 system() 前一定要加 ret</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-3-%E5%9D%91%E4%B8%89%EF%BC%9A%E6%9C%AC%E5%9C%B0%E9%80%9A%EF%BC%8C%E8%BF%9C%E7%A8%8B%E6%AD%BB%E6%B4%BB%E4%B8%8D%E9%80%9A%EF%BC%8C%E7%84%B6%E5%90%8E-%E2%80%9C%E8%BF%9C%E7%AB%AF%E7%8E%AF%E5%A2%83%E6%9C%89%E9%97%AE%E9%A2%98%E5%90%A7-%D0%94%C2%B4-%EF%BE%89%E2%80%9D"><span class="toc-text">6.3 坑三：本地通，远程死活不通，然后:“远端环境有问题吧(#&#96;Д´)ﾉ”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-4-%E5%9D%91%E5%9B%9B%EF%BC%9A%E5%8F%AA%E7%9B%AF-pop-rdi-ret%EF%BC%8C%E5%BF%BD%E7%95%A5%E6%95%B4%E6%9D%A1%E9%93%BE%E7%9A%84%E6%80%BB%E6%B6%88%E8%80%97"><span class="toc-text">6.4 坑四：只盯 pop rdi ; ret，忽略整条链的总消耗</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-5-%E5%9D%91%E4%BA%94%EF%BC%9Apivot-%E6%88%90%E5%8A%9F%E4%BA%86%EF%BC%8C%E4%BD%86%E6%9C%80%E5%90%8E%E8%84%9A%E6%9C%AC%E4%B8%8D%E9%80%9A"><span class="toc-text">6.5 坑五：pivot 成功了，但最后脚本不通</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-%E5%9B%B4%E7%BB%95%E6%A0%88%E5%AF%B9%E9%BD%90%E8%BF%98%E8%83%BD%E6%89%A9%E5%B1%95%E5%88%B0%E5%93%AA%E4%BA%9B%E6%AF%94%E8%B5%9B%E5%9C%BA%E6%99%AF"><span class="toc-text">7. 围绕栈对齐还能扩展到哪些比赛场景</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#7-1-ret2libc"><span class="toc-text">7.1 ret2libc</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-2-puts-plt-%E6%B3%84%E9%9C%B2-%E5%9B%9E%E5%88%B0-vuln-%E5%86%8D%E6%89%93%E7%AC%AC%E4%BA%8C%E9%98%B6%E6%AE%B5"><span class="toc-text">7.2 puts@plt 泄露 + 回到 vuln 再打第二阶段</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-3-ret2csu"><span class="toc-text">7.3 ret2csu</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-4-%E6%A0%88%E8%BF%81%E7%A7%BB"><span class="toc-text">7.4 栈迁移</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-5-SROP"><span class="toc-text">7.5 SROP</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-6-one-gadget"><span class="toc-text">7.6 one_gadget</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-7-%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%8E%A5-ROP"><span class="toc-text">7.7 格式化字符串接 ROP</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-8-%E4%B8%80%E4%B8%AA%E5%BE%88%E5%AE%9E%E7%94%A8%E7%9A%84%E6%AF%94%E8%B5%9B%E4%B9%A0%E6%83%AF%EF%BC%9A%E7%BB%99-exp-%E7%95%99%E4%B8%80%E4%B8%AA%E5%AF%B9%E9%BD%90%E5%BC%80%E5%85%B3"><span class="toc-text">7.8 一个很实用的比赛习惯：给 exp 留一个对齐开关</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#8-%E4%B8%80%E4%B8%AA%E5%BB%BA%E8%AE%AE%E7%9A%84%E6%AF%94%E8%B5%9B%E6%A3%80%E6%9F%A5%E6%B5%81%E7%A8%8B"><span class="toc-text">8. 一个建议的比赛检查流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#9-Linux-%E5%92%8C-Windows-%E7%9A%84%E5%8C%BA%E5%88%AB-%E7%9C%9F%E9%81%87%E8%A7%81%E6%88%91%E5%B0%B1%E8%BA%BA%E4%BA%86%E2%80%A6%E2%80%A6"><span class="toc-text">9. Linux 和 Windows 的区别(真遇见我就躺了……)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#9-1-Linux-SysV-AMD64"><span class="toc-text">9.1 Linux &#x2F; SysV AMD64</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-2-Windows-x64"><span class="toc-text">9.2 Windows x64</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#10-%E6%80%BB%E7%BB%93"><span class="toc-text">10. 总结</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/ctf-pwn-%E9%87%8C%E7%9A%84%E6%A0%88%E5%AF%B9%E9%BD%90/" title="CTF Pwn 里的栈对齐"><img src="/img/20250427020155174569051569879.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CTF Pwn 里的栈对齐"/ loading='lazy'></a><div class="content"><a class="title" href="/ctf-pwn-%E9%87%8C%E7%9A%84%E6%A0%88%E5%AF%B9%E9%BD%90/" title="CTF Pwn 里的栈对齐">CTF Pwn 里的栈对齐</a><time datetime="2026-04-28T15:33:51.000Z" title="发表于 2026-04-28 23:33:51">2026-04-28</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/ctfshow-pwn031-ret2libc-bypass-pie/" title="ctfshow pwn031 ret2libc-绕过PIE"><img src="/img/223547r7VNn.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="ctfshow pwn031 ret2libc-绕过PIE"/ loading='lazy'></a><div class="content"><a class="title" href="/ctfshow-pwn031-ret2libc-bypass-pie/" title="ctfshow pwn031 ret2libc-绕过PIE">ctfshow pwn031 ret2libc-绕过PIE</a><time datetime="2026-04-27T09:30:00.000Z" title="发表于 2026-04-27 17:30:00">2026-04-27</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/ret2libc-detailed-analysis/" title="ret2libc 分析（详细版）"><img src="/img/1.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="ret2libc 分析（详细版）"/ loading='lazy'></a><div class="content"><a class="title" href="/ret2libc-detailed-analysis/" title="ret2libc 分析（详细版）">ret2libc 分析（详细版）</a><time datetime="2026-04-26T13:00:22.000Z" title="发表于 2026-04-26 21:00:22">2026-04-26</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/ctfshow-pwn019-stdout-redirection/" title="ctfshow pwn019 标准输出关闭后的重定向思路"><img src="/img/222.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="ctfshow pwn019 标准输出关闭后的重定向思路"/ loading='lazy'></a><div class="content"><a class="title" href="/ctfshow-pwn019-stdout-redirection/" title="ctfshow pwn019 标准输出关闭后的重定向思路">ctfshow pwn019 标准输出关闭后的重定向思路</a><time datetime="2026-04-24T10:50:00.000Z" title="发表于 2026-04-24 18:50:00">2026-04-24</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/ctfshow-pwn018-redirection/" title="ctfshow pwn018 重定向覆盖与追加"><img src="/img/5.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="ctfshow pwn018 重定向覆盖与追加"/ loading='lazy'></a><div class="content"><a class="title" href="/ctfshow-pwn018-redirection/" title="ctfshow pwn018 重定向覆盖与追加">ctfshow pwn018 重定向覆盖与追加</a><time datetime="2026-04-24T10:20:00.000Z" title="发表于 2026-04-24 18:20:00">2026-04-24</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 0x0off</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.1</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.4</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><script src="/js/tw_cn.js?v=5.5.4"></script><script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章标题或关键词" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.5.4"></script></div></div></body></html>

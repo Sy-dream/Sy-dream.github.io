@@ -18,15 +18,16 @@
   background-color: rgba(10, 21, 28, 0.18) !important;
 }
 
-/* Let the global background show through on home and archive headers. */
+/* Let the global background show through on top banner sections. */
 #page-header.full_page,
-#body-wrap:has(#archive) > #page-header.not-home-page {
+#page-header.not-home-page {
   background: transparent !important;
   background-image: none !important;
+  background-color: transparent !important;
 }
 
 #page-header.full_page::before,
-#body-wrap:has(#archive) > #page-header.not-home-page::before {
+#page-header.not-home-page::before {
   background: transparent !important;
 }
 

@@ -1,0 +1,59 @@
+/* Unify the homepage hero and content area into one visual system. */
+#web_bg {
+  filter: saturate(0.82) brightness(0.82);
+  transform: scale(1.02);
+}
+
+#web_bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(13, 29, 38, 0.28) 0%, rgba(13, 29, 38, 0.12) 24%, rgba(250, 237, 231, 0.2) 100%),
+    radial-gradient(circle at top, rgba(255, 223, 210, 0.2), transparent 42%);
+  pointer-events: none;
+}
+
+#page-header::before {
+  background-color: rgba(10, 21, 28, 0.18) !important;
+}
+
+#recent-posts .recent-post-item,
+#aside-content .card-widget,
+#post,
+#page,
+#archive {
+  background: rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(18px) saturate(1.05);
+  -webkit-backdrop-filter: blur(18px) saturate(1.05);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow: 0 18px 45px rgba(15, 37, 48, 0.14);
+}
+
+#recent-posts .recent-post-item:hover,
+#aside-content .card-widget:hover {
+  box-shadow: 0 24px 55px rgba(15, 37, 48, 0.18);
+}
+
+#recent-posts .recent-post-item .post_cover img {
+  filter: saturate(0.92) contrast(0.98);
+}
+
+#page-header.nav-fixed #nav,
+#page-header.not-top-img #nav {
+  background: rgba(244, 241, 238, 0.76);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+@media screen and (max-width: 768px) {
+  #recent-posts .recent-post-item,
+  #aside-content .card-widget,
+  #post,
+  #page,
+  #archive {
+    background: rgba(255, 255, 255, 0.84) !important;
+    backdrop-filter: blur(12px) saturate(1.02);
+    -webkit-backdrop-filter: blur(12px) saturate(1.02);
+  }
+}

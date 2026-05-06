@@ -24,13 +24,13 @@
       
         <tags>
             
-            <tag> ROP </tag>
-            
-            <tag> ret2libc </tag>
-            
             <tag> ctfshow </tag>
             
             <tag> pwn </tag>
+            
+            <tag> ROP </tag>
+            
+            <tag> ret2libc </tag>
             
             <tag> libc </tag>
             
@@ -94,11 +94,11 @@
       
         <tags>
             
-            <tag> ret2libc </tag>
-            
             <tag> ctfshow </tag>
             
             <tag> pwn </tag>
+            
+            <tag> ret2libc </tag>
             
             <tag> PIE </tag>
             
@@ -244,9 +244,9 @@
             
             <tag> pwn </tag>
             
-            <tag> linux </tag>
-            
             <tag> command-injection </tag>
+            
+            <tag> linux </tag>
             
         </tags>
       
@@ -288,19 +288,6 @@
     
     
     <entry>
-      <title>电影</title>
-      <link href="/2026/04/17/movies/index/"/>
-      <url>/2026/04/17/movies/index/</url>
-      
-        <content type="html"><![CDATA[]]></content>
-      
-      
-      
-    </entry>
-    
-    
-    
-    <entry>
       <title>音乐</title>
       <link href="/2026/04/17/music/index/"/>
       <url>/2026/04/17/music/index/</url>
@@ -312,16 +299,29 @@
     </entry>
     
     
+    
+    <entry>
+      <title>电影</title>
+      <link href="/2026/04/17/movies/index/"/>
+      <url>/2026/04/17/movies/index/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      
+    </entry>
+    
+    
   
   
     
     
     <entry>
-      <title>电影</title>
-      <link href="/movies/index.html"/>
-      <url>/movies/index.html</url>
+      <title>About</title>
+      <link href="/about/index.html"/>
+      <url>/about/index.html</url>
       
-        <content type="html"><![CDATA[<p>这里是电影页面。</p><p>后续可以继续补观影记录、片单或短评。</p>]]></content>
+        <content type="html"><![CDATA[<h2 id="关于我"><a href="#关于我" class="headerlink" title="关于我"></a>关于我</h2><p>我是 <code>0x0off</code>。</p><p>这个博客主要记录下面几类内容：</p><ul><li>ctf 解题以及心路历程</li><li>目前主打 pwn ，偶尔学学web</li><li>做题和复现时踩过的坑，以及最后为什么这样打</li></ul><h2 id="关于本站"><a href="#关于本站" class="headerlink" title="关于本站"></a>关于本站</h2><p>本站基于 <code>Hexo</code> 与 <code>Butterfly</code> 搭建，内容以可复现、少废话、能直接落地为优先。</p><p>我会尽量把这些东西写清楚：</p><ul><li>环境信息和保护机制</li><li>真实利用链，而不是只贴最终脚本</li><li>失败路径、误判点和修正过程</li></ul><h2 id="当前关注"><a href="#当前关注" class="headerlink" title="当前关注"></a>当前关注</h2><ul><li>栈溢出、堆栈平衡、文件保护机制</li><li>格式化字符串和常见利用链整理</li><li>src 漏洞挖掘</li></ul><h2 id="联系方式"><a href="#联系方式" class="headerlink" title="联系方式"></a>联系方式</h2><ul><li>GitHub: <a href="https://github.com/Sy-dream">Sy-dream</a></li><li>Email: <a href="mailto:&#49;&#x39;&#52;&#x35;&#x31;&#x38;&#x34;&#x38;&#51;&#48;&#64;&#113;&#x71;&#x2e;&#x63;&#111;&#x6d;">1945184830@qq.com</a></li><li>Blog: <a href="https://0x0off.top/">0x0off.top</a></li></ul><h2 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h2><p>如果后续你看到这里内容继续扩展，那基本说明这个站还在稳定更新。</p>]]></content>
       
     </entry>
     
@@ -339,11 +339,11 @@
     
     
     <entry>
-      <title>About</title>
-      <link href="/about/index.html"/>
-      <url>/about/index.html</url>
+      <title>Link</title>
+      <link href="/link/index.html"/>
+      <url>/link/index.html</url>
       
-        <content type="html"><![CDATA[<h2 id="关于我"><a href="#关于我" class="headerlink" title="关于我"></a>关于我</h2><p>我是 <code>0x0off</code>。</p><p>这个博客主要记录下面几类内容：</p><ul><li>ctf 解题以及心路历程</li><li>目前主打 pwn ，偶尔学学web</li><li>做题和复现时踩过的坑，以及最后为什么这样打</li></ul><h2 id="关于本站"><a href="#关于本站" class="headerlink" title="关于本站"></a>关于本站</h2><p>本站基于 <code>Hexo</code> 与 <code>Butterfly</code> 搭建，内容以可复现、少废话、能直接落地为优先。</p><p>我会尽量把这些东西写清楚：</p><ul><li>环境信息和保护机制</li><li>真实利用链，而不是只贴最终脚本</li><li>失败路径、误判点和修正过程</li></ul><h2 id="当前关注"><a href="#当前关注" class="headerlink" title="当前关注"></a>当前关注</h2><ul><li>栈溢出、堆栈平衡、文件保护机制</li><li>格式化字符串和常见利用链整理</li><li>src 漏洞挖掘</li></ul><h2 id="联系方式"><a href="#联系方式" class="headerlink" title="联系方式"></a>联系方式</h2><ul><li>GitHub: <a href="https://github.com/Sy-dream">Sy-dream</a></li><li>Email: <a href="mailto:&#x31;&#x39;&#x34;&#x35;&#49;&#x38;&#x34;&#56;&#x33;&#x30;&#64;&#x71;&#113;&#46;&#x63;&#x6f;&#109;">1945184830@qq.com</a></li><li>Blog: <a href="https://0x0off.top/">0x0off.top</a></li></ul><h2 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h2><p>如果后续你看到这里内容继续扩展，那基本说明这个站还在稳定更新。</p>]]></content>
+        <content type="html"><![CDATA[<p>欢迎交换友链。</p><p>这页按 Butterfly 的 <code>link</code> 页面方式整理，后续只需要维护 <code>source/_data/link.yml</code> 就能继续增删卡片。</p><h2 id="友链申请"><a href="#友链申请" class="headerlink" title="友链申请"></a>友链申请</h2><p>如果要交换友链，建议至少满足这些条件：</p><ul><li>站点可以稳定访问</li><li>有持续更新的原创内容</li><li>页面没有明显广告或恶意跳转</li></ul><p>申请时建议提供下面这些信息：</p><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">name:</span> <span class="string">站点名称</span></span><br><span class="line"><span class="attr">link:</span> <span class="string">站点链接</span></span><br><span class="line"><span class="attr">avatar:</span> <span class="string">头像链接</span></span><br><span class="line"><span class="attr">descr:</span> <span class="string">一句话介绍</span></span><br></pre></td></tr></table></figure><p>当前先放入我自己的站点入口和正在使用或长期参考的项目。</p>]]></content>
       
     </entry>
     
@@ -372,22 +372,22 @@
     
     
     <entry>
-      <title>Tags</title>
-      <link href="/tags/index.html"/>
-      <url>/tags/index.html</url>
+      <title>电影</title>
+      <link href="/movies/index.html"/>
+      <url>/movies/index.html</url>
       
-        <content type="html"><![CDATA[]]></content>
+        <content type="html"><![CDATA[<p>这里是电影页面。</p><p>后续可以继续补观影记录、片单或短评。</p>]]></content>
       
     </entry>
     
     
     
     <entry>
-      <title>Link</title>
-      <link href="/link/index.html"/>
-      <url>/link/index.html</url>
+      <title>Tags</title>
+      <link href="/tags/index.html"/>
+      <url>/tags/index.html</url>
       
-        <content type="html"><![CDATA[<p>欢迎交换友链。</p><p>这页按 Butterfly 的 <code>link</code> 页面方式整理，后续只需要维护 <code>source/_data/link.yml</code> 就能继续增删卡片。</p><h2 id="友链申请"><a href="#友链申请" class="headerlink" title="友链申请"></a>友链申请</h2><p>如果要交换友链，建议至少满足这些条件：</p><ul><li>站点可以稳定访问</li><li>有持续更新的原创内容</li><li>页面没有明显广告或恶意跳转</li></ul><p>申请时建议提供下面这些信息：</p><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">name:</span> <span class="string">站点名称</span></span><br><span class="line"><span class="attr">link:</span> <span class="string">站点链接</span></span><br><span class="line"><span class="attr">avatar:</span> <span class="string">头像链接</span></span><br><span class="line"><span class="attr">descr:</span> <span class="string">一句话介绍</span></span><br></pre></td></tr></table></figure><p>当前先放入我自己的站点入口和正在使用或长期参考的项目。</p>]]></content>
+        <content type="html"><![CDATA[]]></content>
       
     </entry>
     

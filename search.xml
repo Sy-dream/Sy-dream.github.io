@@ -24,15 +24,15 @@
       
         <tags>
             
+            <tag> ret2libc </tag>
+            
             <tag> ctfshow </tag>
             
             <tag> pwn </tag>
             
-            <tag> ret2libc </tag>
+            <tag> pwntools </tag>
             
             <tag> libc </tag>
-            
-            <tag> pwntools </tag>
             
         </tags>
       
@@ -61,13 +61,13 @@
       
         <tags>
             
-            <tag> ctfshow </tag>
-            
-            <tag> pwn </tag>
+            <tag> ROP </tag>
             
             <tag> ret2libc </tag>
             
-            <tag> ROP </tag>
+            <tag> ctfshow </tag>
+            
+            <tag> pwn </tag>
             
             <tag> libc </tag>
             
@@ -98,11 +98,11 @@
       
         <tags>
             
-            <tag> ret2libc </tag>
-            
             <tag> 栈对齐 </tag>
             
             <tag> ROP </tag>
+            
+            <tag> ret2libc </tag>
             
         </tags>
       
@@ -131,13 +131,13 @@
       
         <tags>
             
+            <tag> ret2libc </tag>
+            
             <tag> ctfshow </tag>
             
             <tag> pwn </tag>
             
             <tag> PIE </tag>
-            
-            <tag> ret2libc </tag>
             
             <tag> ebx </tag>
             
@@ -168,9 +168,9 @@
       
         <tags>
             
-            <tag> ret2libc </tag>
-            
             <tag> ROP </tag>
+            
+            <tag> ret2libc </tag>
             
             <tag> libc </tag>
             
@@ -281,9 +281,9 @@
             
             <tag> pwn </tag>
             
-            <tag> command-injection </tag>
-            
             <tag> linux </tag>
+            
+            <tag> command-injection </tag>
             
         </tags>
       
@@ -325,19 +325,6 @@
     
     
     <entry>
-      <title>音乐</title>
-      <link href="/2026/04/17/music/index/"/>
-      <url>/2026/04/17/music/index/</url>
-      
-        <content type="html"><![CDATA[]]></content>
-      
-      
-      
-    </entry>
-    
-    
-    
-    <entry>
       <title>电影</title>
       <link href="/2026/04/17/movies/index/"/>
       <url>/2026/04/17/movies/index/</url>
@@ -349,30 +336,21 @@
     </entry>
     
     
-  
-  
-    
     
     <entry>
-      <title>About</title>
-      <link href="/about/index.html"/>
-      <url>/about/index.html</url>
+      <title>音乐</title>
+      <link href="/2026/04/17/music/index/"/>
+      <url>/2026/04/17/music/index/</url>
       
-        <content type="html"><![CDATA[<h2 id="关于我"><a href="#关于我" class="headerlink" title="关于我"></a>关于我</h2><p>我是 <code>0x0off</code>。</p><p>这个博客主要记录下面几类内容：</p><ul><li>ctf 解题以及心路历程</li><li>目前主打 pwn ，偶尔学学web</li><li>做题和复现时踩过的坑，以及最后为什么这样打</li></ul><h2 id="关于本站"><a href="#关于本站" class="headerlink" title="关于本站"></a>关于本站</h2><p>本站基于 <code>Hexo</code> 与 <code>Butterfly</code> 搭建，内容以可复现、少废话、能直接落地为优先。</p><p>我会尽量把这些东西写清楚：</p><ul><li>环境信息和保护机制</li><li>真实利用链，而不是只贴最终脚本</li><li>失败路径、误判点和修正过程</li></ul><h2 id="当前关注"><a href="#当前关注" class="headerlink" title="当前关注"></a>当前关注</h2><ul><li>栈溢出、堆栈平衡、文件保护机制</li><li>格式化字符串和常见利用链整理</li><li>src 漏洞挖掘</li></ul><h2 id="联系方式"><a href="#联系方式" class="headerlink" title="联系方式"></a>联系方式</h2><ul><li>GitHub: <a href="https://github.com/Sy-dream">Sy-dream</a></li><li>Email: <a href="mailto:&#x31;&#x39;&#52;&#x35;&#49;&#56;&#x34;&#x38;&#x33;&#x30;&#x40;&#x71;&#x71;&#46;&#99;&#x6f;&#109;">1945184830@qq.com</a></li><li>Blog: <a href="https://0x0off.top/">0x0off.top</a></li></ul><h2 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h2><p>如果后续你看到这里内容继续扩展，那基本说明这个站还在稳定更新。</p>]]></content>
+        <content type="html"><![CDATA[]]></content>
+      
+      
       
     </entry>
     
     
-    
-    <entry>
-      <title></title>
-      <link href="/css/site-polish.css"/>
-      <url>/css/site-polish.css</url>
-      
-        <content type="html"><![CDATA[/* Unify the homepage hero and content area into one visual system. */#web_bg {  filter: saturate(0.82) brightness(0.82);  transform: scale(1.02);}#web_bg::before {  content: "";  position: absolute;  inset: 0;  background:    linear-gradient(180deg, rgba(13, 29, 38, 0.28) 0%, rgba(13, 29, 38, 0.12) 24%, rgba(250, 237, 231, 0.2) 100%),    radial-gradient(circle at top, rgba(255, 223, 210, 0.2), transparent 42%);  pointer-events: none;}#page-header::before {  background-color: rgba(10, 21, 28, 0.18) !important;}/* Let the global background show through on top banner sections. */#page-header.full_page,#page-header.not-home-page {  background: transparent !important;  background-image: none !important;  background-color: transparent !important;}#page-header.full_page::before,#page-header.not-home-page::before {  background: transparent !important;}#recent-posts .recent-post-item,#aside-content .card-widget,#post,#page,#archive {  background: rgba(255, 255, 255, 0.78) !important;  border: 1px solid rgba(255, 255, 255, 0.38);  box-shadow: 0 18px 45px rgba(15, 37, 48, 0.14);}#recent-posts .recent-post-item:hover,#aside-content .card-widget:hover {  box-shadow: 0 24px 55px rgba(15, 37, 48, 0.18);}#recent-posts .recent-post-item .post_cover img {  filter: saturate(0.92) contrast(0.98);}#page-header.nav-fixed #nav,#page-header.not-top-img #nav {  background: rgba(244, 241, 238, 0.76);}@media screen and (max-width: 768px) {  #recent-posts .recent-post-item,  #aside-content .card-widget,  #post,  #page,  #archive {    background: rgba(255, 255, 255, 0.84) !important;  }}/* VS Code-like code blocks for regular articles and fullpage mode. */.container figure.highlight,.container pre {  --hl-color: #d4d4d4;  --hl-bg: #1e1e1e;  --hltools-bg: #252526;  --hltools-color: #c5c5c5;  --hlnumber-bg: #1e1e1e;  --hlnumber-color: #858585;  --hlscrollbar-bg: #3e3e42;  --hlexpand-bg: linear-gradient(180deg, rgba(30, 30, 30, 0.35), rgba(30, 30, 30, 0.96));  background: var(--hl-bg) !important;  color: var(--hl-color) !important;  box-shadow: 0 14px 30px rgba(15, 23, 32, 0.22);}.container figure.highlight .highlight-tools,.container figure.highlight .gutter pre,.container figure.highlight .code pre,.container figure.highlight pre,.container figure.highlight table,.container pre code {  background: var(--hl-bg) !important;  color: var(--hl-color) !important;}.container figure.highlight .highlight-tools {  background: var(--hltools-bg) !important;  color: var(--hltools-color) !important;  border-bottom: 1px solid rgba(255, 255, 255, 0.06);}.container figure.highlight .gutter pre {  background: var(--hlnumber-bg) !important;  color: var(--hlnumber-color) !important;  border-right: 1px solid rgba(255, 255, 255, 0.06);}.container figure.highlight figcaption,.container figure.highlight .caption,.container figure.highlight figcaption a,.container figure.highlight .caption a,.container .highlight-tools .code-lang {  color: #c5c5c5 !important;}.container figure.highlight .line.marked {  background-color: rgba(38, 79, 120, 0.45) !important;}.container figure.highlight table::-webkit-scrollbar-thumb,.container figure.highlight.default pre::-webkit-scrollbar-thumb {  background: var(--hlscrollbar-bg) !important;}.container :not(pre) > code {  background: #252526;  color: #d7ba7d;  border: 1px solid rgba(255, 255, 255, 0.08);}.container figure.highlight pre .comment {  color: #6a9955 !important;}.container figure.highlight pre .keyword,.container figure.highlight pre .title,.container figure.highlight pre .css .hexcolor,.container figure.highlight pre .meta {  color: #569cd6 !important;}.container figure.highlight pre .string,.container figure.highlight pre .value,.container figure.highlight pre .inheritance,.container figure.highlight pre .header,.container figure.highlight pre .ruby .symbol,.container figure.highlight pre .xml .cdata,.container figure.highlight pre .special,.container figure.highlight pre .formula {  color: #ce9178 !important;}.container figure.highlight pre .number,.container figure.highlight pre .preprocessor,.container figure.highlight pre .literal,.container figure.highlight pre .params,.container figure.highlight pre .constant,.container figure.highlight pre .command,.container figure.highlight pre .built_in {  color: #b5cea8 !important;}.container figure.highlight pre .function,.container figure.highlight pre .python .decorator,.container figure.highlight pre .python .title,.container figure.highlight pre .ruby .function .title,.container figure.highlight pre .ruby .title .keyword,.container figure.highlight pre .perl .sub,.container figure.highlight pre .javascript .title,.container figure.highlight pre .coffeescript .title {  color: #dcdcaa !important;}.container figure.highlight pre .variable,.container figure.highlight pre .attribute,.container figure.highlight pre .regexp,.container figure.highlight pre .ruby .constant,.container figure.highlight pre .xml .tag .title,.container figure.highlight pre .xml .pi,.container figure.highlight pre .xml .doctype,.container figure.highlight pre .html .doctype,.container figure.highlight pre .css .id,.container figure.highlight pre .tag .name,.container figure.highlight pre .css .class,.container figure.highlight pre .css .pseudo,.container figure.highlight pre .tag .attr,.container figure.highlight pre .javascript .function {  color: #9cdcfe !important;}.container figure.highlight pre .tag {  color: #808080 !important;}/* Keep Butterfly code fullpage mode above the glass cards without overriding layout. */.container figure.highlight.code-fullpage {  z-index: 999999 !important;}]]></content>
-      
-    </entry>
-    
+  
+  
     
     
     <entry>
@@ -387,11 +365,55 @@
     
     
     <entry>
+      <title>About</title>
+      <link href="/about/index.html"/>
+      <url>/about/index.html</url>
+      
+        <content type="html"><![CDATA[<h2 id="关于我"><a href="#关于我" class="headerlink" title="关于我"></a>关于我</h2><p>我是 <code>0x0off</code>。</p><p>这个博客主要记录下面几类内容：</p><ul><li>ctf 解题以及心路历程</li><li>目前主打 pwn ，偶尔学学web</li><li>做题和复现时踩过的坑，以及最后为什么这样打</li></ul><h2 id="关于本站"><a href="#关于本站" class="headerlink" title="关于本站"></a>关于本站</h2><p>本站基于 <code>Hexo</code> 与 <code>Butterfly</code> 搭建，内容以可复现、少废话、能直接落地为优先。</p><p>我会尽量把这些东西写清楚：</p><ul><li>环境信息和保护机制</li><li>真实利用链，而不是只贴最终脚本</li><li>失败路径、误判点和修正过程</li></ul><h2 id="当前关注"><a href="#当前关注" class="headerlink" title="当前关注"></a>当前关注</h2><ul><li>栈溢出、堆栈平衡、文件保护机制</li><li>格式化字符串和常见利用链整理</li><li>src 漏洞挖掘</li></ul><h2 id="联系方式"><a href="#联系方式" class="headerlink" title="联系方式"></a>联系方式</h2><ul><li>GitHub: <a href="https://github.com/Sy-dream">Sy-dream</a></li><li>Email: <a href="mailto:&#x31;&#x39;&#x34;&#x35;&#x31;&#x38;&#52;&#x38;&#x33;&#48;&#64;&#x71;&#x71;&#46;&#99;&#111;&#109;">1945184830@qq.com</a></li><li>Blog: <a href="https://0x0off.top/">0x0off.top</a></li></ul><h2 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h2><p>如果后续你看到这里内容继续扩展，那基本说明这个站还在稳定更新。</p>]]></content>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title></title>
+      <link href="/css/site-polish.css"/>
+      <url>/css/site-polish.css</url>
+      
+        <content type="html"><![CDATA[/* Unify the homepage hero and content area into one visual system. */#web_bg {  filter: saturate(0.82) brightness(0.82);  transform: scale(1.02);}#web_bg::before {  content: "";  position: absolute;  inset: 0;  background:    linear-gradient(180deg, rgba(13, 29, 38, 0.28) 0%, rgba(13, 29, 38, 0.12) 24%, rgba(250, 237, 231, 0.2) 100%),    radial-gradient(circle at top, rgba(255, 223, 210, 0.2), transparent 42%);  pointer-events: none;}#page-header::before {  background-color: rgba(10, 21, 28, 0.18) !important;}/* Let the global background show through on top banner sections. */#page-header.full_page,#page-header.not-home-page {  background: transparent !important;  background-image: none !important;  background-color: transparent !important;}#page-header.full_page::before,#page-header.not-home-page::before {  background: transparent !important;}#recent-posts .recent-post-item,#aside-content .card-widget,#post,#page,#archive {  background: rgba(255, 255, 255, 0.78) !important;  border: 1px solid rgba(255, 255, 255, 0.38);  box-shadow: 0 18px 45px rgba(15, 37, 48, 0.14);}#recent-posts .recent-post-item:hover,#aside-content .card-widget:hover {  box-shadow: 0 24px 55px rgba(15, 37, 48, 0.18);}#recent-posts .recent-post-item .post_cover img {  filter: saturate(0.92) contrast(0.98);}#page-header.nav-fixed #nav,#page-header.not-top-img #nav {  background: rgba(244, 241, 238, 0.76);}@media screen and (max-width: 768px) {  #recent-posts .recent-post-item,  #aside-content .card-widget,  #post,  #page,  #archive {    background: rgba(255, 255, 255, 0.84) !important;  }}/* VS Code-like code blocks for regular articles and fullpage mode. */.container figure.highlight,.container pre {  --hl-color: #d4d4d4;  --hl-bg: #1e1e1e;  --hltools-bg: #252526;  --hltools-color: #c5c5c5;  --hlnumber-bg: #1e1e1e;  --hlnumber-color: #858585;  --hlscrollbar-bg: #3e3e42;  --hlexpand-bg: linear-gradient(180deg, rgba(30, 30, 30, 0.35), rgba(30, 30, 30, 0.96));  background: var(--hl-bg) !important;  color: var(--hl-color) !important;  box-shadow: 0 14px 30px rgba(15, 23, 32, 0.22);}.container figure.highlight .highlight-tools,.container figure.highlight .gutter pre,.container figure.highlight .code pre,.container figure.highlight pre,.container figure.highlight table,.container pre code {  background: var(--hl-bg) !important;  color: var(--hl-color) !important;}.container figure.highlight .highlight-tools {  background: var(--hltools-bg) !important;  color: var(--hltools-color) !important;  border-bottom: 1px solid rgba(255, 255, 255, 0.06);}.container figure.highlight .gutter pre {  background: var(--hlnumber-bg) !important;  color: var(--hlnumber-color) !important;  border-right: 1px solid rgba(255, 255, 255, 0.06);}.container figure.highlight figcaption,.container figure.highlight .caption,.container figure.highlight figcaption a,.container figure.highlight .caption a,.container .highlight-tools .code-lang {  color: #c5c5c5 !important;}.container figure.highlight .line.marked {  background-color: rgba(38, 79, 120, 0.45) !important;}.container figure.highlight table::-webkit-scrollbar-thumb,.container figure.highlight.default pre::-webkit-scrollbar-thumb {  background: var(--hlscrollbar-bg) !important;}.container :not(pre) > code {  background: #f7f1e3;  color: #7a5f2b;  border: 1px solid #eadfc3;  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);}.container figure.highlight pre .comment {  color: #6a9955 !important;}.container figure.highlight pre .keyword,.container figure.highlight pre .title,.container figure.highlight pre .css .hexcolor,.container figure.highlight pre .meta {  color: #569cd6 !important;}.container figure.highlight pre .string,.container figure.highlight pre .value,.container figure.highlight pre .inheritance,.container figure.highlight pre .header,.container figure.highlight pre .ruby .symbol,.container figure.highlight pre .xml .cdata,.container figure.highlight pre .special,.container figure.highlight pre .formula {  color: #ce9178 !important;}.container figure.highlight pre .number,.container figure.highlight pre .preprocessor,.container figure.highlight pre .literal,.container figure.highlight pre .params,.container figure.highlight pre .constant,.container figure.highlight pre .command,.container figure.highlight pre .built_in {  color: #b5cea8 !important;}.container figure.highlight pre .function,.container figure.highlight pre .python .decorator,.container figure.highlight pre .python .title,.container figure.highlight pre .ruby .function .title,.container figure.highlight pre .ruby .title .keyword,.container figure.highlight pre .perl .sub,.container figure.highlight pre .javascript .title,.container figure.highlight pre .coffeescript .title {  color: #dcdcaa !important;}.container figure.highlight pre .variable,.container figure.highlight pre .attribute,.container figure.highlight pre .regexp,.container figure.highlight pre .ruby .constant,.container figure.highlight pre .xml .tag .title,.container figure.highlight pre .xml .pi,.container figure.highlight pre .xml .doctype,.container figure.highlight pre .html .doctype,.container figure.highlight pre .css .id,.container figure.highlight pre .tag .name,.container figure.highlight pre .css .class,.container figure.highlight pre .css .pseudo,.container figure.highlight pre .tag .attr,.container figure.highlight pre .javascript .function {  color: #9cdcfe !important;}.container figure.highlight pre .tag {  color: #808080 !important;}/* Keep Butterfly code fullpage mode above the glass cards without overriding layout. */.container figure.highlight.code-fullpage {  z-index: 999999 !important;}]]></content>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>Link</title>
       <link href="/link/index.html"/>
       <url>/link/index.html</url>
       
         <content type="html"><![CDATA[<p>欢迎交换友链。</p><p>这页按 Butterfly 的 <code>link</code> 页面方式整理，后续只需要维护 <code>source/_data/link.yml</code> 就能继续增删卡片。</p><h2 id="友链申请"><a href="#友链申请" class="headerlink" title="友链申请"></a>友链申请</h2><p>如果要交换友链，建议至少满足这些条件：</p><ul><li>站点可以稳定访问</li><li>有持续更新的原创内容</li><li>页面没有明显广告或恶意跳转</li></ul><p>申请时建议提供下面这些信息：</p><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">name:</span> <span class="string">站点名称</span></span><br><span class="line"><span class="attr">link:</span> <span class="string">站点链接</span></span><br><span class="line"><span class="attr">avatar:</span> <span class="string">头像链接</span></span><br><span class="line"><span class="attr">descr:</span> <span class="string">一句话介绍</span></span><br></pre></td></tr></table></figure><p>当前先放入我自己的站点入口和正在使用或长期参考的项目。</p>]]></content>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>电影</title>
+      <link href="/movies/index.html"/>
+      <url>/movies/index.html</url>
+      
+        <content type="html"><![CDATA[<p>这里是电影页面。</p><p>后续可以继续补观影记录、片单或短评。</p>]]></content>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>Link</title>
+      <link href="/friends/index.html"/>
+      <url>/friends/index.html</url>
+      
+        <content type="html"><![CDATA[<div class="flink"><div class="flink-name">Friends</div><div class="flink-desc">如果哪个比赛让我爆零，我将叫上一车面包人</div><div class="flink-list">      <div class="flink-list-item">        <a href="https://whiteisok.github.io" title="凹凸麦塔" target="_blank">          <div class="flink-item-icon">            <img class="no-lightbox" src="https://whiteisok.github.io/assets/images/sheep.webp" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="凹凸麦塔" />          </div>          <div class="flink-item-name">凹凸麦塔</div>          <div class="flink-item-desc" title="是个菜鸡">是个菜鸡</div>        </a>      </div>      <div class="flink-list-item">        <a href="https://66619.eu.org" title="𝟞𝟙𝟡'𝕤 𝔹𝕃𝕆𝔾" target="_blank">          <div class="flink-item-icon">            <img class="no-lightbox" src="/img/friends/619.png" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="𝟞𝟙𝟡'𝕤 𝔹𝕃𝕆𝔾" />          </div>          <div class="flink-item-name">𝟞𝟙𝟡'𝕤 𝔹𝕃𝕆𝔾</div>          <div class="flink-item-desc" title="𝓙𝓾𝓼𝓽 𝓪 𝓬𝓵𝓸𝓾𝓭.">𝓙𝓾𝓼𝓽 𝓪 𝓬𝓵𝓸𝓾𝓭.</div>        </a>      </div></div><div class="flink-name">推荐项目</div><div class="flink-desc">当前站点使用或长期参考的项目与文档</div><div class="flink-list">      <div class="flink-list-item">        <a href="https://github.com/jerryc127/hexo-theme-butterfly" title="Butterfly" target="_blank">          <div class="flink-item-icon">            <img class="no-lightbox" src="https://github.githubassets.com/favicons/favicon.png" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="Butterfly" />          </div>          <div class="flink-item-name">Butterfly</div>          <div class="flink-item-desc" title="当前博客使用的 Hexo 主题">当前博客使用的 Hexo 主题</div>        </a>      </div>      <div class="flink-list-item">        <a href="https://butterfly.js.org/" title="Butterfly Docs" target="_blank">          <div class="flink-item-icon">            <img class="no-lightbox" src="https://butterfly.js.org/img/favicon.png" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="Butterfly Docs" />          </div>          <div class="flink-item-name">Butterfly Docs</div>          <div class="flink-item-desc" title="主题配置、页面类型与标签外挂文档">主题配置、页面类型与标签外挂文档</div>        </a>      </div>      <div class="flink-list-item">        <a href="https://hexo.io/" title="Hexo" target="_blank">          <div class="flink-item-icon">            <img class="no-lightbox" src="https://hexo.io/icon/favicon-196x196.png" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="Hexo" />          </div>          <div class="flink-item-name">Hexo</div>          <div class="flink-item-desc" title="静态博客框架官方站点">静态博客框架官方站点</div>        </a>      </div></div></div>]]></content>
       
     </entry>
     
@@ -414,28 +436,6 @@
       <url>/tags/index.html</url>
       
         <content type="html"><![CDATA[]]></content>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>Link</title>
-      <link href="/friends/index.html"/>
-      <url>/friends/index.html</url>
-      
-        <content type="html"><![CDATA[<div class="flink"><div class="flink-name">Friends</div><div class="flink-desc">如果哪个比赛让我爆零，我将叫上一车面包人</div><div class="flink-list">      <div class="flink-list-item">        <a href="https://whiteisok.github.io" title="凹凸麦塔" target="_blank">          <div class="flink-item-icon">            <img class="no-lightbox" src="https://whiteisok.github.io/assets/images/sheep.webp" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="凹凸麦塔" />          </div>          <div class="flink-item-name">凹凸麦塔</div>          <div class="flink-item-desc" title="是个菜鸡">是个菜鸡</div>        </a>      </div>      <div class="flink-list-item">        <a href="https://66619.eu.org" title="𝟞𝟙𝟡'𝕤 𝔹𝕃𝕆𝔾" target="_blank">          <div class="flink-item-icon">            <img class="no-lightbox" src="/img/friends/619.png" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="𝟞𝟙𝟡'𝕤 𝔹𝕃𝕆𝔾" />          </div>          <div class="flink-item-name">𝟞𝟙𝟡'𝕤 𝔹𝕃𝕆𝔾</div>          <div class="flink-item-desc" title="𝓙𝓾𝓼𝓽 𝓪 𝓬𝓵𝓸𝓾𝓭.">𝓙𝓾𝓼𝓽 𝓪 𝓬𝓵𝓸𝓾𝓭.</div>        </a>      </div></div><div class="flink-name">推荐项目</div><div class="flink-desc">当前站点使用或长期参考的项目与文档</div><div class="flink-list">      <div class="flink-list-item">        <a href="https://github.com/jerryc127/hexo-theme-butterfly" title="Butterfly" target="_blank">          <div class="flink-item-icon">            <img class="no-lightbox" src="https://github.githubassets.com/favicons/favicon.png" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="Butterfly" />          </div>          <div class="flink-item-name">Butterfly</div>          <div class="flink-item-desc" title="当前博客使用的 Hexo 主题">当前博客使用的 Hexo 主题</div>        </a>      </div>      <div class="flink-list-item">        <a href="https://butterfly.js.org/" title="Butterfly Docs" target="_blank">          <div class="flink-item-icon">            <img class="no-lightbox" src="https://butterfly.js.org/img/favicon.png" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="Butterfly Docs" />          </div>          <div class="flink-item-name">Butterfly Docs</div>          <div class="flink-item-desc" title="主题配置、页面类型与标签外挂文档">主题配置、页面类型与标签外挂文档</div>        </a>      </div>      <div class="flink-list-item">        <a href="https://hexo.io/" title="Hexo" target="_blank">          <div class="flink-item-icon">            <img class="no-lightbox" src="https://hexo.io/icon/favicon-196x196.png" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="Hexo" />          </div>          <div class="flink-item-name">Hexo</div>          <div class="flink-item-desc" title="静态博客框架官方站点">静态博客框架官方站点</div>        </a>      </div></div></div>]]></content>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>电影</title>
-      <link href="/movies/index.html"/>
-      <url>/movies/index.html</url>
-      
-        <content type="html"><![CDATA[<p>这里是电影页面。</p><p>后续可以继续补观影记录、片单或短评。</p>]]></content>
       
     </entry>
     

@@ -5369,6 +5369,43 @@ figure.highlight pre .javascript .function {
 .container.post-content ul > li {
   list-style-type: circle;
 }
+#post #article-container.post-content {
+  --hl-color: rgba(255,255,255,0.82);
+  --hl-bg: #111827;
+  --hltools-bg: #0f172a;
+  --hlnumber-bg: #0b1220;
+  --hlnumber-color: rgba(255,255,255,0.36);
+  --hlscrollbar-bg: #334155;
+  --hlexpand-bg: linear-gradient(180deg, rgba(15,23,42,0.58), rgba(15,23,42,0.92));
+  padding: 30px 34px;
+  border: 1px solid rgba(148,163,184,0.14);
+  background: -webkit-linear-gradient(270deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96));
+  background: -moz-linear-gradient(270deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96));
+  background: -o-linear-gradient(270deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96));
+  background: -ms-linear-gradient(270deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96));
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96));
+  -webkit-box-shadow: 0 18px 42px rgba(15,23,42,0.08);
+  box-shadow: 0 18px 42px rgba(15,23,42,0.08);
+  border-radius: 10px;
+}
+@media screen and (max-width: 768px) {
+  #post #article-container.post-content {
+    padding: 22px 20px;
+  }
+}
+#post #article-container.post-content code {
+  background: #1e293b;
+  color: #f8fafc;
+}
+#post #article-container.post-content pre,
+#post #article-container.post-content figure.highlight {
+  background: var(--hl-bg);
+}
+#post #article-container.post-content pre code,
+#post #article-container.post-content figure.highlight pre code {
+  background: none;
+  color: var(--hl-color);
+}
 #post .tag_share:after {
   display: block;
   clear: both;
@@ -7566,12 +7603,6 @@ blockquote.pullquote.right {
   background-color: rgba(0,0,0,0.7);
   content: '';
 }
-[data-theme='dark'] .container code {
-  background: #2c2c2c;
-}
-[data-theme='dark'] .container pre > code {
-  background: #171717;
-}
 [data-theme='dark'] .container figure.highlight {
   -webkit-box-shadow: none;
   box-shadow: none;
@@ -7588,6 +7619,14 @@ blockquote.pullquote.right {
   color: #e2f1ff;
 }
 [data-theme='dark'] #post #article-container.post-content {
+  --hl-color: #334155;
+  --hl-bg: #f8fafc;
+  --hltools-bg: #e2e8f0;
+  --hltools-color: #475569;
+  --hlnumber-bg: #e2e8f0;
+  --hlnumber-color: rgba(51,65,85,0.45);
+  --hlscrollbar-bg: #cbd5e1;
+  --hlexpand-bg: linear-gradient(180deg, rgba(248,250,252,0.62), rgba(248,250,252,0.94));
   padding: 30px 34px;
   border: 1px solid rgba(148,163,184,0.14);
   background: -webkit-linear-gradient(270deg, rgba(30,41,59,0.42), rgba(15,23,42,0.82));
@@ -7643,6 +7682,80 @@ blockquote.pullquote.right {
 }
 [data-theme='dark'] #post #article-container.post-content strong {
   color: rgba(255,255,255,0.9);
+}
+[data-theme='dark'] #post #article-container.post-content code {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+[data-theme='dark'] #post #article-container.post-content pre,
+[data-theme='dark'] #post #article-container.post-content figure.highlight {
+  background: var(--hl-bg);
+}
+[data-theme='dark'] #post #article-container.post-content pre code,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre code {
+  background: none;
+  color: var(--hl-color);
+}
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .comment {
+  color: rgba(100,116,139,0.9);
+}
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .variable,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .attribute,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .regexp,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .ruby .constant,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .xml .tag .title,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .xml .pi,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .xml .doctype,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .html .doctype,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .css .id,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .tag .name,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .css .class,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .css .pseudo {
+  color: #dc2626;
+}
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .tag,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .keyword,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .title,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .css .hexcolor {
+  color: #0284c7;
+}
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .number,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .preprocessor,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .literal,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .params,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .constant,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .command {
+  color: #b45309;
+}
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .built_in {
+  color: #a16207;
+}
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .ruby .class .title,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .css .rules .attribute,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .string,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .value,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .inheritance,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .header,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .ruby .symbol,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .xml .cdata,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .special,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .formula {
+  color: #15803d;
+}
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .function,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .python .decorator,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .python .title,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .ruby .function .title,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .ruby .title .keyword,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .perl .sub,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .javascript .title,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .coffeescript .title {
+  color: #4f46e5;
+}
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .tag .attr,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .javascript .function,
+[data-theme='dark'] #post #article-container.post-content figure.highlight pre .meta {
+  color: #7c3aed;
 }
 [data-theme='dark'] #post #article-container.post-content blockquote {
   background: rgba(51,65,85,0.52);
